@@ -203,16 +203,33 @@ Item {
                 }
                 let artistStr = activePlayer?.trackArtist || "";
                 let baseInfo = `${cleanedTitle}${artistStr ? ' • ' + artistStr : ''}`;
-                if (LyricsService.loading) {
-                    return `${baseInfo} • Fetching lyrics…`;
-                }
-                if (LyricsService.lyricLines.length === 0) {
-                    return `${baseInfo} • No lyrics`;
+                if (LyricsService.isSpotifyPlayer(activePlayer)) {
+                    if (LyricsService.loading) {
+                        return `${baseInfo} • Fetching lyrics…`;
+                    }
+                    if (LyricsService.lyricLines.length === 0) {
+                        return `${baseInfo} • No lyrics`;
+                    }
                 }
                 return baseInfo;
             }
 
             readonly property bool isOverflowing: width > 0 && topBarMusicText.implicitWidth > width + 5
+
+            onDisplayTextChanged: {
+                topBarMarqueeAnim.stop();
+                topBarMarqueeRow.x = 0;
+                if (isOverflowing)
+                    topBarMarqueeAnim.start();
+            }
+            onIsOverflowingChanged: {
+                if (!isOverflowing) {
+                    topBarMarqueeAnim.stop();
+                    topBarMarqueeRow.x = 0;
+                } else {
+                    topBarMarqueeAnim.restart();
+                }
+            }
 
             Row {
                 id: topBarMarqueeRow

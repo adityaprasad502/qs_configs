@@ -11,6 +11,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
+import Quickshell.Widgets
 
 Item { // Player instance
     id: root
@@ -211,6 +212,29 @@ Item { // Player instance
                     width: size
                     height: size
                 }
+
+                Rectangle {
+                    id: appIconBadge
+                    anchors.bottom: parent.bottom
+                    anchors.right: parent.right
+                    anchors.margins: 4
+                    width: 22
+                    height: 22
+                    radius: Appearance.rounding.full
+                    color: ColorUtils.applyAlpha(blendedColors.colLayer0, 0.88)
+                    visible: appIconImage.status === Image.Ready && appIconImage.source != ""
+
+                    IconImage {
+                        id: appIconImage
+                        anchors.centerIn: parent
+                        implicitSize: 14
+                        asynchronous: true
+                        source: {
+                            let entry = root.player?.desktopEntry || root.player?.identity || "";
+                            return Quickshell.iconPath(AppSearch.guessIcon(entry), "");
+                        }
+                    }
+                }
             }
 
             ColumnLayout { // Info & controls
@@ -225,6 +249,21 @@ Item { // Player instance
 
                     readonly property bool isOverflowing: width > 0 && trackTitleText.implicitWidth > width + 5
                     readonly property string rawTitle: root.player?.trackTitle || "Untitled"
+
+                    onRawTitleChanged: {
+                        marqueeAnim.stop();
+                        marqueeRow.x = 0;
+                        if (isOverflowing)
+                            marqueeAnim.start();
+                    }
+                    onIsOverflowingChanged: {
+                        if (!isOverflowing) {
+                            marqueeAnim.stop();
+                            marqueeRow.x = 0;
+                        } else {
+                            marqueeAnim.restart();
+                        }
+                    }
 
                     Row {
                         id: marqueeRow
@@ -276,6 +315,21 @@ Item { // Player instance
                             return `${artist} • ${album}`;
                         }
                         return artist || album;
+                    }
+
+                    onRawSubtitleChanged: {
+                        artistMarqueeAnim.stop();
+                        artistMarqueeRow.x = 0;
+                        if (isOverflowing)
+                            artistMarqueeAnim.start();
+                    }
+                    onIsOverflowingChanged: {
+                        if (!isOverflowing) {
+                            artistMarqueeAnim.stop();
+                            artistMarqueeRow.x = 0;
+                        } else {
+                            artistMarqueeAnim.restart();
+                        }
                     }
 
                     Row {
@@ -350,6 +404,7 @@ Item { // Player instance
                         maximumLineCount: 1
                         visible: true
                         text: {
+                            if (!LyricsService.isSpotifyPlayer(root.player)) return "";
                             if (LyricsService.lyricLines.length > 0) return LyricsService.nextLyricLine;
                             if (LyricsService.loading) return "Fetching lyrics…";
                             return "No lyrics available";
