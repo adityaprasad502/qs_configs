@@ -19,6 +19,17 @@ Item {
 
     property list<real> visualizerPoints: []
 
+    onWidthChanged: {
+        if (root.width > 100) {
+            GlobalStates.topBarMediaWidth = root.width;
+        }
+    }
+    Component.onCompleted: {
+        if (root.width > 100) {
+            GlobalStates.topBarMediaWidth = root.width;
+        }
+    }
+
     // State helpers
     readonly property bool isPlaying: activePlayer?.playbackState === MprisPlaybackState.Playing
     readonly property bool isPaused: activePlayer != null && !root.isPlaying
@@ -83,8 +94,10 @@ Item {
                 id: visualizerBg
                 anchors.fill: parent
                 layer.enabled: false
-                visible: root.isPlaying && root.visualizerPoints.length > 0
-                live: root.isPlaying
+                visible: opacity > 0
+                opacity: (root.isPlaying && !GlobalStates.mediaControlsOpen && root.visualizerPoints.length > 0) ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                live: root.isPlaying && !GlobalStates.mediaControlsOpen
                 points: root.visualizerPoints
                 maxVisualizerValue: 1000
                 smoothing: 2

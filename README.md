@@ -8,32 +8,30 @@ A customized desktop shell environment built with **Quickshell**, **QML**, and *
 
 ## Key Modifications & New Features
 
-Below is a detailed breakdown of the enhancements and features introduced on top of the original `end-4/dots-hyprland` configuration.
+Below is a breakdown of the enhancements and features introduced on top of the original `end-4/dots-hyprland` configuration.
 
 ### 1. 🎵 Real-Time Synchronized Lyrics (`LyricsService.qml`)
-- **Spotify Support Only (`isSpotifyPlayer`)**: Synchronized lyrics fetching is restricted specifically to **Spotify** MPRIS clients. `LyricsService.qml` verifies the active player via `isSpotifyPlayer(activePlayer)`, checking if the player's `identity`, `desktopEntry`, or `busName` contains `"spotify"`. Non-Spotify players are ignored for lyrics streaming.
-- **LRCLIB Integration**: Added a dedicated `LyricsService.qml` singleton that queries [LRCLIB](https://lrclib.net/) for synchronized timecoded (`.lrc`) and plain lyrics based on the current Spotify track and artist.
-- **Intelligent Title Normalization**: Automatically cleans music titles (`StringUtils.cleanMusicTitle`) to strip tags like remaster suffixes or featured artists, ensuring reliable lyric matches.
-- **Live Top Bar Streaming**: Displays live synchronized lyrics directly in the top bar (`Media.qml`) as the Spotify track progresses (`LyricsService.currentLyricLine`).
-- **Lyric Caching**: In-memory caching minimizes API queries across track changes and repeats.
+- **LRCLIB Integration (Spotify Only)**: Added a dedicated `LyricsService.qml` singleton that queries [LRCLIB](https://lrclib.net/) for synchronized timecoded (`.lrc`) lyrics for **Spotify**.
+- **Live Top Bar Streaming**: Displays live synchronized lyrics directly in the top bar (`Media.qml`) as the Spotify track plays.
+- **Lyric Caching**: Caches fetched lyrics in memory to avoid repeated queries across track changes.
 
 ### 2. 🖥️ Redesigned Top Bar & Interactive Media Pill (`BarContent.qml` & `Media.qml`)
 - **Interactive Media Pill**:
-  - Replaced the previous separate left bar items with a unified, interactive `Media.qml` pill integrated with **Spotify**.
-  - Dynamically switches between the Spotify track title/artist and live synchronized lyrics when music is playing.
-  - Displays formatted remaining track duration (`-MM:SS`).
-  - When Spotify is paused or not running, displays an inspirational quote (`"Everything happens for a reason"`) with an `auto_awesome` sparkle icon.
+  - Replaced the previous left bar widgets with a unified `Media.qml` pill integrated with **Spotify**.
+  - Dynamically switches between the track title/artist (when paused) and live synchronized lyrics (when playing).
+  - Displays remaining track duration (`-MM:SS`).
+  - When no media player is running, displays an inspirational quote (`"Everything happens for a reason"`) with an `auto_awesome` sparkle icon.
 - **Live Wave Visualizer**:
-  - Embedded `WaveVisualizer` directly into the background of the Media pill, animating in sync with Spotify audio playback.
-- **Rich Mouse Gestures**:
+  - Embedded `WaveVisualizer` directly into the background of the Media pill, animating in sync with audio playback.
+- **Mouse Gestures**:
   - **Left Click**: Opens Media Controls popup (or Left Sidebar if no player is active).
   - **Double Click**: Toggles Left Sidebar.
-  - **Middle Click**: Play/Pause toggle.
-  - **Forward / Back / Scroll**: Next / Previous track navigation.
-- **Clean Sectional Layout (`BarContent.qml`)**:
+  - **Middle Click**: Play / Pause toggle.
+  - **Scroll / Back / Forward**: Next / Previous track navigation.
+- **Streamlined Layout (`BarContent.qml`)**:
   - **Left**: Interactive Spotify Media Pill & Live Lyrics.
-  - **Center**: Centered Workspace switcher (`Workspaces.qml`).
-  - **Right**: Consolidated system cluster featuring System Resources/Stats, Utility Buttons, Clock/Date + Weather, System Tray, and Right Sidebar toggle.
+  - **Center**: Workspace switcher (`Workspaces.qml`).
+  - **Right**: Consolidated system cluster (Resources/Stats, Utility Buttons, Clock/Date + Weather, System Tray, and Right Sidebar toggle).
 
 ---
 
@@ -46,9 +44,7 @@ Below is a detailed breakdown of the enhancements and features introduced on top
 ├── welcome.qml                  # First run / onboarding experience
 ├── modules/
 │   ├── common/
-│   │   └── widgets/
-│   │       ├── WaveVisualizer.qml
-│   │       └── NotificationItem.qml
+│   │   └── widgets/             # Core UI components (WaveVisualizer, NotificationItem, etc.)
 │   └── ii/
 │       ├── bar/                 # Top bar components (BarContent, Media, ClockWidget, etc.)
 │       └── mediaControls/       # Media control popups & player interface
@@ -72,4 +68,4 @@ qs -p shell.qml
 
 ## Credits & Acknowledgements
 - Original Quickshell configuration base by **[end-4/dots-hyprland](https://github.com/end-4/dots-hyprland)**.
-- Lyrics provided via **[LRCLIB](https://lrclib.net/)**.
+- Synchronized lyrics provided via **[LRCLIB](https://lrclib.net/)**.

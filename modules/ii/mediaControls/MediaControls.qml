@@ -19,7 +19,7 @@ Scope {
     readonly property var realPlayers: MprisController.players
     readonly property var meaningfulPlayers: filterDuplicatePlayers(realPlayers)
     readonly property real osdWidth: Appearance.sizes.osdWidth
-    readonly property real widgetWidth: Appearance.sizes.mediaControlsWidth
+    readonly property real widgetWidth: !Config.options.bar.vertical && GlobalStates.topBarMediaWidth > 100 ? GlobalStates.topBarMediaWidth : Appearance.sizes.mediaControlsWidth
     readonly property real widgetHeight: Appearance.sizes.mediaControlsHeight
     property real popupRounding: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1
     property list<real> visualizerPoints: []
@@ -100,7 +100,7 @@ Scope {
             margins {
                 top: Config.options.bar.vertical ? ((panelWindow.screen.height / 2) - widgetHeight * 1.5) : Appearance.sizes.barHeight
                 bottom: Appearance.sizes.barHeight
-                left: Config.options.bar.vertical ? Appearance.sizes.barHeight : 45
+                left: Config.options.bar.vertical ? Appearance.sizes.barHeight : ((Config.options.bar.cornerStyle === 1 ? Appearance.sizes.hyprlandGapsOut : 0) + Appearance.rounding.screenRounding)
                 right: Appearance.sizes.barHeight
             }
 
