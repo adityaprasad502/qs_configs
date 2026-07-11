@@ -190,21 +190,19 @@ Item { // Player instance
                     font.pixelSize: Appearance.font.pixelSize.large
                     color: blendedColors.colOnLayer0
                     elide: Text.ElideRight
+                    maximumLineCount: 1
+                    textFormat: Text.PlainText
                     text: StringUtils.cleanMusicTitle(root.player?.trackTitle) || "Untitled"
-                    animateChange: true
-                    animationDistanceX: 6
-                    animationDistanceY: 0
                 }
+
                 StyledText {
                     id: trackArtist
                     Layout.fillWidth: true
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: blendedColors.colSubtext
                     elide: Text.ElideRight
+                    maximumLineCount: 1
                     text: root.player?.trackArtist
-                    animateChange: true
-                    animationDistanceX: 6
-                    animationDistanceY: 0
                 }
                 Item { Layout.fillHeight: true }
                 Item {

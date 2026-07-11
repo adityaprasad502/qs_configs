@@ -11,13 +11,22 @@ Item {
     implicitWidth: rowLayout.implicitWidth
     implicitHeight: Appearance.sizes.barHeight
 
+    TextMetrics {
+        id: timeMetrics
+        font: timeText.font
+        text: Config.options.time.secondPrecision ? "00:00:00" : "00:00"
+    }
+
     RowLayout {
         id: rowLayout
         anchors.centerIn: parent
         spacing: 4
 
         StyledText {
-            font.pixelSize: Appearance.font.pixelSize.large
+            id: timeText
+            Layout.preferredWidth: Math.ceil(timeMetrics.advanceWidth)
+            horizontalAlignment: Text.AlignRight
+            font.pixelSize: Appearance.font.pixelSize.normal
             color: Appearance.colors.colOnLayer1
             text: DateTime.time
         }
@@ -25,7 +34,7 @@ Item {
         StyledText {
             visible: root.showDate
             font.pixelSize: Appearance.font.pixelSize.small
-            color: Appearance.colors.colOnLayer1
+            color: Appearance.colors.colSubtext
             text: "•"
         }
 

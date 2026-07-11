@@ -14,10 +14,10 @@ MouseArea {
     RowLayout {
         id: rowLayout
 
-        spacing: 0
+        spacing: 8
         anchors.fill: parent
-        anchors.leftMargin: 4
-        anchors.rightMargin: 4
+        anchors.leftMargin: 6
+        anchors.rightMargin: 6
 
         Resource {
             iconName: "memory"
@@ -31,7 +31,6 @@ MouseArea {
             shown: (Config.options.bar.resources.alwaysShowSwap && percentage > 0) || 
                 (MprisController.activePlayer?.trackTitle == null) ||
                 root.alwaysShowAllResources
-            Layout.leftMargin: shown ? 6 : 0
             warningThreshold: Config.options.bar.resources.swapWarningThreshold
         }
 
@@ -41,7 +40,6 @@ MouseArea {
             shown: Config.options.bar.resources.alwaysShowCpu || 
                 !(MprisController.activePlayer?.trackTitle?.length > 0) ||
                 root.alwaysShowAllResources
-            Layout.leftMargin: shown ? 6 : 0
             warningThreshold: Config.options.bar.resources.cpuWarningThreshold
         }
 

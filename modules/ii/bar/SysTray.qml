@@ -70,7 +70,7 @@ Item {
         columns: root.vertical ? 1 : -1
         anchors.fill: parent
         rowSpacing: 8
-        columnSpacing: 15
+        columnSpacing: 6
 
         RippleButton {
             id: trayOverflowButton
@@ -127,6 +127,11 @@ Item {
                     }
                 }
             }
+        }
+
+        BatteryIndicator {
+            visible: Battery.available
+            Layout.alignment: Qt.AlignVCenter
         }
 
         Repeater {

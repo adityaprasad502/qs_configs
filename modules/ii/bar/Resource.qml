@@ -28,7 +28,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             lineWidth: Appearance.rounding.unsharpen
             value: percentage
-            implicitSize: 20
+            implicitSize: 18
             colPrimary: root.warning ? Appearance.colors.colError : Appearance.colors.colOnSecondaryContainer
             accountForLightBleeding: !root.warning
             enableAnimation: false
@@ -43,7 +43,7 @@ Item {
                     font.weight: Font.DemiBold
                     fill: 1
                     text: iconName
-                    iconSize: Appearance.font.pixelSize.normal
+                    iconSize: Appearance.font.pixelSize.small
                     color: Appearance.m3colors.m3onSecondaryContainer
                 }
             }

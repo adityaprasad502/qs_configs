@@ -274,6 +274,7 @@ Item {
 
                             source: workspaceButtonBackground.mainAppIconSource
                             implicitSize: (!root.showNumbers && Config.options?.bar.workspaces.showAppIcons) ? workspaceIconSize : workspaceIconSizeShrinked
+                            smooth: true
 
                             Behavior on opacity {
                                 animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
