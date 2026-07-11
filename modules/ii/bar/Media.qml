@@ -187,25 +187,63 @@ Item {
             }
         }
 
-        StyledText {
-            id: topBarMusicText
+        Item {
+            id: topBarTextContainer
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
-            elide: Text.ElideRight
-            textFormat: Text.PlainText
-            color: Appearance.colors.colOnLayer1
-            text: {
+            implicitHeight: topBarMusicText.implicitHeight
+            clip: true
+
+            readonly property string displayText: {
                 if (!root.hasMedia) {
                     return "Everything happens for a reason";
                 }
                 if (root.hasLyrics) {
                     return LyricsService.currentLyricLine;
                 }
-                let baseInfo = `${cleanedTitle}${activePlayer?.trackArtist ? ' • ' + activePlayer.trackArtist : ''}`;
+                let artistStr = activePlayer?.trackArtist || "";
+                let baseInfo = `${cleanedTitle}${artistStr ? ' • ' + artistStr : ''}`;
                 if (LyricsService.loading) {
                     return `${baseInfo} • Fetching lyrics…`;
                 }
-                return `${baseInfo} • No lyrics`;
+                if (LyricsService.lyricLines.length === 0) {
+                    return `${baseInfo} • No lyrics`;
+                }
+                return baseInfo;
+            }
+
+            readonly property bool isOverflowing: width > 0 && topBarMusicText.implicitWidth > width + 5
+
+            Row {
+                id: topBarMarqueeRow
+                spacing: 36
+                x: 0
+
+                StyledText {
+                    id: topBarMusicText
+                    textFormat: Text.PlainText
+                    color: Appearance.colors.colOnLayer1
+                    text: topBarTextContainer.displayText
+                }
+
+                StyledText {
+                    visible: topBarTextContainer.isOverflowing && topBarMarqueeAnim.running
+                    textFormat: Text.PlainText
+                    color: Appearance.colors.colOnLayer1
+                    text: topBarTextContainer.displayText
+                }
+
+                SequentialAnimation on x {
+                    id: topBarMarqueeAnim
+                    running: topBarTextContainer.isOverflowing
+                    loops: Animation.Infinite
+                    PauseAnimation { duration: 1800 }
+                    NumberAnimation {
+                        from: 0
+                        to: -(topBarMusicText.implicitWidth + topBarMarqueeRow.spacing)
+                        duration: Math.max(3000, topBarMusicText.implicitWidth * 25)
+                    }
+                }
             }
         }
 

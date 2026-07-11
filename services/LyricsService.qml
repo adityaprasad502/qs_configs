@@ -179,11 +179,22 @@ Singleton {
         function onActivePlayerChanged() { root.syncTrackChange(); }
     }
 
+    function weightedLength(str) {
+        if (!str) return 0;
+        let w = 0;
+        for (let i = 0; i < str.length; i++) {
+            w += (str.charCodeAt(i) > 127) ? 2.2 : 1.0;
+        }
+        return w;
+    }
+
     function canJoinLines(lines, k) {
         if (k < 0 || k + 1 >= lines.length) return false;
         let l1 = lines[k];
         let l2 = lines[k + 1];
-        return (l1.text.length < 48 && (l1.text.length + l2.text.length) < 95 && (l2.time - l1.time) <= 6.5);
+        let w1 = weightedLength(l1.text);
+        let w2 = weightedLength(l2.text);
+        return (w1 < 44 && (w1 + w2) < 82 && (l2.time - l1.time) <= 6.5);
     }
 
     Timer {

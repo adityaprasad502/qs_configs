@@ -261,14 +261,14 @@ Item { // Player instance
                     }
                 }
 
-                StyledText {
-                    id: trackArtist
+                Item {
+                    id: artistMarqueeContainer
                     Layout.fillWidth: true
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: blendedColors.colSubtext
-                    elide: Text.ElideRight
-                    maximumLineCount: 1
-                    text: {
+                    implicitHeight: trackArtistText.implicitHeight
+                    clip: true
+
+                    readonly property bool isOverflowing: width > 0 && trackArtistText.implicitWidth > width + 5
+                    readonly property string rawSubtitle: {
                         let artist = root.player?.trackArtist || "";
                         let album = root.player?.trackAlbum || "";
                         let title = root.player?.trackTitle || "";
@@ -276,6 +276,40 @@ Item { // Player instance
                             return `${artist} • ${album}`;
                         }
                         return artist || album;
+                    }
+
+                    Row {
+                        id: artistMarqueeRow
+                        spacing: 40
+                        x: 0
+
+                        StyledText {
+                            id: trackArtistText
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: blendedColors.colSubtext
+                            textFormat: Text.PlainText
+                            text: artistMarqueeContainer.rawSubtitle
+                        }
+
+                        StyledText {
+                            visible: artistMarqueeContainer.isOverflowing && artistMarqueeAnim.running
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: blendedColors.colSubtext
+                            textFormat: Text.PlainText
+                            text: artistMarqueeContainer.rawSubtitle
+                        }
+
+                        SequentialAnimation on x {
+                            id: artistMarqueeAnim
+                            running: artistMarqueeContainer.isOverflowing && root.visible
+                            loops: Animation.Infinite
+                            PauseAnimation { duration: 2200 }
+                            NumberAnimation {
+                                from: 0
+                                to: -(trackArtistText.implicitWidth + artistMarqueeRow.spacing)
+                                duration: Math.max(3000, trackArtistText.implicitWidth * 28)
+                            }
+                        }
                     }
                 }
 
