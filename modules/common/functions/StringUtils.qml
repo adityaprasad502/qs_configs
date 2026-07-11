@@ -191,17 +191,22 @@ Singleton {
     function cleanMusicTitle(title) {
         if (!title)
             return "";
-        // Brackets
-        title = title.replace(/^ *\([^)]*\) */g, " "); // Round brackets
-        title = title.replace(/^ *\[[^\]]*\] */g, " "); // Square brackets
-        title = title.replace(/^ *\{[^\}]*\} */g, " "); // Curly brackets
-        // Japenis brackets
-        title = title.replace(/^ *【[^】]*】/, ""); // Touhou
-        title = title.replace(/^ *《[^》]*》/, ""); // ??
-        title = title.replace(/^ *「[^」]*」/, ""); // OP/ED thingie
-        title = title.replace(/^ *『[^』]*』/, ""); // OP/ED thingie
+        // Remove bracketed tags anywhere in string (e.g. (From "..."), [Official Video])
+        title = title.replace(/ *\([^)]*\) */g, " "); // Round brackets
+        title = title.replace(/ *\[[^\]]*\] */g, " "); // Square brackets
+        title = title.replace(/ *\{[^\}]*\} */g, " "); // Curly brackets
+        title = title.replace(/ *【[^】]*】/g, " ");
+        title = title.replace(/ *《[^》]*》/g, " ");
+        title = title.replace(/ *「[^」]*」/g, " ");
+        title = title.replace(/ *『[^』]*』/g, " ");
 
-        return title.trim();
+        // Remove hyphenated metadata (e.g. " - From ...", " - Official ...", " - Remastered ...")
+        title = title.replace(/\s+-\s+From\s+.*$/i, "");
+        title = title.replace(/\s+-\s+Official\s+.*$/i, "");
+        title = title.replace(/\s+-\s+Remastered.*$/i, "");
+        title = title.replace(/\s+-\s+Live.*$/i, "");
+
+        return title.replace(/\s+/g, " ").trim();
     }
 
     /**

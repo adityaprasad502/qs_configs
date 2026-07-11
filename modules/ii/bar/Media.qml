@@ -33,6 +33,7 @@ Item {
     // State helpers
     readonly property bool isPlaying: activePlayer?.playbackState === MprisPlaybackState.Playing
     readonly property bool isPaused: activePlayer != null && !root.isPlaying
+    readonly property bool hasMedia: activePlayer != null && (root.isPlaying || (StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || "") !== "")
     readonly property bool hasLyrics: root.isPlaying && LyricsService.currentLyricLine && LyricsService.currentLyricLine.length > 0
 
     Process {
@@ -70,7 +71,7 @@ Item {
         anchors.bottomMargin: 4
         radius: Appearance.rounding.full
         color: {
-            if (!activePlayer) return ColorUtils.transparentize(Appearance.colors.colLayer1, 0.7);
+            if (!root.hasMedia) return ColorUtils.transparentize(Appearance.colors.colLayer1, 0.7);
             if (hoverArea.containsMouse) return ColorUtils.transparentize(Appearance.colors.colLayer1, 0.25);
             return ColorUtils.transparentize(Appearance.colors.colLayer1, 0.45);
         }
@@ -99,8 +100,8 @@ Item {
                 Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                 live: root.isPlaying && !GlobalStates.mediaControlsOpen
                 points: root.visualizerPoints
-                maxVisualizerValue: 1000
-                smoothing: 2
+                maxVisualizerValue: 850
+                smoothing: 1
                 color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.45)
             }
         }
@@ -118,13 +119,13 @@ Item {
         }
         onPressed: (event) => {
             if (event.button === Qt.MiddleButton) {
-                if (activePlayer) activePlayer.togglePlaying();
+                if (root.hasMedia && activePlayer) activePlayer.togglePlaying();
             } else if (event.button === Qt.BackButton) {
-                if (activePlayer) activePlayer.previous();
+                if (root.hasMedia && activePlayer) activePlayer.previous();
             } else if (event.button === Qt.ForwardButton || event.button === Qt.RightButton) {
-                if (activePlayer) activePlayer.next();
+                if (root.hasMedia && activePlayer) activePlayer.next();
             } else if (event.button === Qt.LeftButton) {
-                if (activePlayer) GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen;
+                if (root.hasMedia) GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen;
                 else GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
             }
         }
@@ -151,7 +152,7 @@ Item {
                 text: "auto_awesome"
                 iconSize: Appearance.font.pixelSize.normal
                 color: Appearance.colors.colSubtext
-                visible: !activePlayer
+                visible: !root.hasMedia
                 opacity: visible ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
             }
@@ -160,7 +161,7 @@ Item {
             ClippedFilledCircularProgress {
                 id: mediaCircProg
                 anchors.centerIn: parent
-                visible: activePlayer != null
+                visible: root.hasMedia
                 opacity: visible ? 1 : 0
                 lineWidth: Appearance.rounding.unsharpen
                 value: activePlayer?.position / activePlayer?.length
@@ -194,19 +195,23 @@ Item {
             textFormat: Text.PlainText
             color: Appearance.colors.colOnLayer1
             text: {
-                if (!activePlayer) {
+                if (!root.hasMedia) {
                     return "Everything happens for a reason";
                 }
                 if (root.hasLyrics) {
                     return LyricsService.currentLyricLine;
                 }
-                return `${cleanedTitle}${activePlayer?.trackArtist ? ' • ' + activePlayer.trackArtist : ''}`;
+                let baseInfo = `${cleanedTitle}${activePlayer?.trackArtist ? ' • ' + activePlayer.trackArtist : ''}`;
+                if (LyricsService.loading) {
+                    return `${baseInfo} • Fetching lyrics…`;
+                }
+                return `${baseInfo} • No lyrics`;
             }
         }
 
         StyledText {
             id: trackTimeText
-            visible: activePlayer != null && (activePlayer?.length || 0) > 0
+            visible: root.hasMedia && (activePlayer?.length || 0) > 0
             Layout.alignment: Qt.AlignVCenter
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.colors.colSubtext

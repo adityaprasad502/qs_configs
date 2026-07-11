@@ -17,6 +17,8 @@ Singleton {
     property int currentFetchId: 0
     property bool loading: false
     property string currentLyricLine: ""
+    property string nextLyricLine: ""
+    property bool isMultiLineJoined: false
     property var lyricLines: [] // Array of { time: seconds, text: string }
     property string plainLyrics: ""
 
@@ -75,6 +77,8 @@ Singleton {
         root.lyricLines = [];
         root.plainLyrics = "";
         root.currentLyricLine = "";
+        root.nextLyricLine = "";
+        root.isMultiLineJoined = false;
 
         let cleanTrack = StringUtils.cleanMusicTitle(track);
         let cleanArtist = artist || "";
@@ -154,6 +158,8 @@ Singleton {
                 root.lyricLines = [];
                 root.plainLyrics = "";
                 root.currentLyricLine = "";
+                root.nextLyricLine = "";
+                root.isMultiLineJoined = false;
             }
         }
     }
@@ -171,6 +177,13 @@ Singleton {
     Connections {
         target: MprisController
         function onActivePlayerChanged() { root.syncTrackChange(); }
+    }
+
+    function canJoinLines(lines, k) {
+        if (k < 0 || k + 1 >= lines.length) return false;
+        let l1 = lines[k];
+        let l2 = lines[k + 1];
+        return (l1.text.length < 48 && (l1.text.length + l2.text.length) < 95 && (l2.time - l1.time) <= 6.5);
     }
 
     Timer {
@@ -191,15 +204,66 @@ Singleton {
             let audioSyncPos = Math.max(0, currentPos - 0.35);
 
             let lines = root.lyricLines;
-            let currentText = "";
+            let currIdx = -1;
             for (let i = 0; i < lines.length; i++) {
                 if (audioSyncPos >= lines[i].time) {
-                    currentText = lines[i].text;
+                    currIdx = i;
                 } else {
                     break;
                 }
             }
-            root.currentLyricLine = currentText;
+
+            let newCurrentLine = "";
+            let newNextLine = "";
+            let isJoined = false;
+
+            if (currIdx >= 0) {
+                let pairStartIdx = currIdx;
+                let i = 0;
+                while (i < lines.length) {
+                    if (root.canJoinLines(lines, i)) {
+                        if (i === currIdx || i + 1 === currIdx) {
+                            pairStartIdx = i;
+                            isJoined = true;
+                            break;
+                        }
+                        i += 2;
+                    } else {
+                        if (i === currIdx) {
+                            pairStartIdx = i;
+                            isJoined = false;
+                            break;
+                        }
+                        i += 1;
+                    }
+                }
+
+                let nextGroupIdx = isJoined ? pairStartIdx + 2 : pairStartIdx + 1;
+
+                if (isJoined) {
+                    newCurrentLine = lines[pairStartIdx].text + " • " + lines[pairStartIdx + 1].text;
+                } else {
+                    newCurrentLine = lines[pairStartIdx].text;
+                }
+
+                if (nextGroupIdx < lines.length) {
+                    if (root.canJoinLines(lines, nextGroupIdx)) {
+                        newNextLine = lines[nextGroupIdx].text + " • " + lines[nextGroupIdx + 1].text;
+                    } else {
+                        newNextLine = lines[nextGroupIdx].text;
+                    }
+                }
+            } else if (lines.length > 0) {
+                if (root.canJoinLines(lines, 0)) {
+                    newNextLine = lines[0].text + " • " + lines[1].text;
+                } else {
+                    newNextLine = lines[0].text;
+                }
+            }
+
+            if (root.currentLyricLine !== newCurrentLine) root.currentLyricLine = newCurrentLine;
+            if (root.nextLyricLine !== newNextLine) root.nextLyricLine = newNextLine;
+            if (root.isMultiLineJoined !== isJoined) root.isMultiLineJoined = isJoined;
         }
     }
 

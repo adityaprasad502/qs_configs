@@ -12,17 +12,22 @@ Below is a breakdown of the enhancements and features introduced on top of the o
 
 ### 1. 🎵 Real-Time Synchronized Lyrics (`LyricsService.qml`)
 - **LRCLIB Integration (Spotify Only)**: Added a dedicated `LyricsService.qml` singleton that queries [LRCLIB](https://lrclib.net/) for synchronized timecoded (`.lrc`) lyrics for **Spotify**.
-- **Live Top Bar Streaming**: Displays live synchronized lyrics directly in the top bar (`Media.qml`) as the Spotify track plays.
-- **Lyric Caching**: Caches fetched lyrics in memory to avoid repeated queries across track changes.
+- **Deterministic Multi-Line Pairing**: Uses a single-pass disjoint-pair algorithm so adjacent short lyric lines join cleanly into natural phrases (`"Line 1 • Line 2"`) without ever overlapping or repeating lines.
+- **Live Upcoming Phrase Preview**: Streams the current sung phrase to the top bar (`Media.qml`) while showing the upcoming lyric line centered inside the Media Controls popup island (`PlayerControl.qml`).
+- **Smart Status States**: Automatically displays `"Fetching lyrics…"` while loading and `"No lyrics available"` / `"• No lyrics"` when a track has no synced lyrics.
+- **Performance Optimized**: Eliminates timer closures and prevents redundant QML property updates (`currentLyricLine !== newCurrentLine`) to save CPU and battery.
 
-### 2. 🖥️ Redesigned Top Bar & Interactive Media Pill (`BarContent.qml` & `Media.qml`)
-- **Interactive Media Pill**:
-  - Replaced the previous left bar widgets with a unified `Media.qml` pill integrated with **Spotify**.
-  - Dynamically switches between the track title/artist (when paused) and live synchronized lyrics (when playing).
-  - Displays remaining track duration (`-MM:SS`).
+### 2. 🖥️ Redesigned Top Bar & Media Controls Popup Island (`BarContent.qml`, `Media.qml` & `PlayerControl.qml`)
+- **Interactive Top Bar Media Pill (`Media.qml`)**:
+  - Dynamically switches between the cleaned track title/artist (when paused or instrumental) and live synchronized lyrics (when playing).
+  - Strips hyphenated suffixes (`- From ...`, `- Official ...`, `- Remastered ...`) and trailing bracket tags for ultra-clean top bar metadata.
   - When no media player is running, displays an inspirational quote (`"Everything happens for a reason"`) with an `auto_awesome` sparkle icon.
-- **Live Wave Visualizer**:
-  - Embedded `WaveVisualizer` directly into the background of the Media pill, animating in sync with audio playback.
+- **Enhanced Media Controls Popup Island (`PlayerControl.qml`)**:
+  - **Full Title Looping Marquee**: Displays full uncleaned track titles, scrolling long titles smoothly in a continuous looping marquee while deduplicating single album subtitles.
+  - **30 FPS Interpolated Seekbar**: Real-time 30 FPS seekbar interpolation bridges 1-second MPRIS D-Bus updates for butter-smooth progress, automatically pausing when closed.
+  - **Symmetrical Split-Time Layout**: Elapsed time (`trackTimeLeft`) and total duration (`trackTimeRight`) frame the seekbar with fixed `44px` widths so layout elements stay perfectly centered.
+- **Live Wave Visualizer (`WaveVisualizer.qml`)**:
+  - Embedded `WaveVisualizer` directly into the background of the Media pill and player controls with non-linear power curve scaling (`Math.pow(norm, 0.72)`) for balanced reactivity across soft and heavy music.
 - **Mouse Gestures**:
   - **Left Click**: Opens Media Controls popup (or Left Sidebar if no player is active).
   - **Double Click**: Toggles Left Sidebar.
