@@ -156,11 +156,11 @@ Item { // Bar content region
                 Layout.rightMargin: Appearance.rounding.screenRounding
                 Layout.fillWidth: false
 
-                implicitWidth: indicatorsRowLayout.implicitWidth + 10 * 2
-                implicitHeight: indicatorsRowLayout.implicitHeight + 5 * 2
+                implicitWidth: indicatorsRowLayout.implicitWidth + 8 * 2
+                implicitHeight: Appearance.sizes.baseBarHeight - 8
 
-                buttonRadius: Appearance.rounding.full
-                colBackground: barRightSideMouseArea.hovered ? Appearance.colors.colLayer1Hover : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
+                buttonRadius: Appearance.rounding.small
+                colBackground: Appearance.colors.colLayer1
                 colBackgroundHover: Appearance.colors.colLayer1Hover
                 colRipple: Appearance.colors.colLayer1Active
                 colBackgroundToggled: Appearance.colors.colSecondaryContainer
@@ -182,6 +182,17 @@ Item { // Bar content region
                     anchors.centerIn: parent
                     property real realSpacing: 15
                     spacing: 0
+
+                    SysTray {
+                        id: sysTrayItem
+                        visible: root.useShortenedForm === 0
+                        Layout.fillWidth: false
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: visible ? implicitWidth : 0
+                        invertSide: Config?.options.bar.bottom
+                        showSeparator: false
+                        Layout.rightMargin: 4
+                    }
 
                     Revealer {
                         reveal: Audio.sink?.audio?.muted ?? false
@@ -216,7 +227,7 @@ Item { // Bar content region
                     }
                     Revealer {
                         reveal: Notifications.silent || Notifications.unread > 0
-                        Layout.fillHeight: true
+                        Layout.alignment: Qt.AlignVCenter
                         Layout.rightMargin: reveal ? indicatorsRowLayout.realSpacing : 0
                         implicitHeight: reveal ? notificationUnreadCount.implicitHeight : 0
                         implicitWidth: reveal ? notificationUnreadCount.implicitWidth : 0
@@ -239,51 +250,60 @@ Item { // Bar content region
                         iconSize: Appearance.font.pixelSize.larger
                         color: rightSidebarButton.colText
                     }
+                    BatteryIndicator {
+                        visible: Battery.available
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.leftMargin: 8
+                    }
                 }
             }
 
-            SysTray {
-                id: sysTrayItem
-                visible: root.useShortenedForm === 0
-                Layout.fillWidth: false
-                Layout.fillHeight: true
-                Layout.preferredWidth: visible ? implicitWidth : 0
-                invertSide: Config?.options.bar.bottom
-                showSeparator: false
-            }
+
 
             Item { Layout.fillWidth: true; Layout.fillHeight: true }
 
             // DateTime + Weather
             MouseArea {
                 Layout.alignment: Qt.AlignVCenter
-                implicitWidth: clockGroupContent.implicitWidth
-                implicitHeight: clockGroupContent.implicitHeight
+                implicitWidth: clockGroupContent.implicitWidth + 8
+                implicitHeight: Appearance.sizes.baseBarHeight
 
                 onPressed: {
                     GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
                 }
 
-                BarGroup {
+                Rectangle {
                     id: clockGroupContent
+                    anchors.centerIn: parent
+                    color: Config.options?.bar.borderless ? "transparent" : Appearance.colors.colLayer1
+                    radius: Appearance.rounding.small
+                    implicitWidth: clockRow.implicitWidth + 16
+                    implicitHeight: Appearance.sizes.baseBarHeight - 8
 
-                    ClockWidget {
-                        showDate: (Config.options.bar.verbose && root.useShortenedForm < 2)
-                        Layout.alignment: Qt.AlignVCenter
-                    }
+                    RowLayout {
+                        id: clockRow
+                        anchors.centerIn: parent
+                        spacing: 0
+                        
+                        ClockWidget {
+                            showDate: (Config.options.bar.verbose && root.useShortenedForm < 2)
+                            Layout.alignment: Qt.AlignVCenter
+                        }
 
-                    StyledText {
-                        visible: Config.options.bar.weather.enable
-                        Layout.alignment: Qt.AlignVCenter
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colSubtext
-                        text: "•"
-                    }
+                        StyledText {
+                            visible: Config.options.bar.weather.enable
+                            Layout.alignment: Qt.AlignVCenter
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colSubtext
+                            text: " • "
+                        }
 
-                    Loader {
-                        active: Config.options.bar.weather.enable
-                        Layout.alignment: Qt.AlignVCenter
-                        sourceComponent: WeatherBar {}
+                        Loader {
+                            active: Config.options.bar.weather.enable
+                            Layout.alignment: Qt.AlignVCenter
+                            Layout.rightMargin: 4
+                            sourceComponent: WeatherBar {}
+                        }
                     }
                 }
             }
@@ -291,15 +311,20 @@ Item { // Bar content region
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                visible: utilButtonsItem.visible
+                visible: utilButtonsGroup.visible
             }
 
             // Utils
-            UtilButtons {
-                id: utilButtonsItem
+            BarGroup {
+                id: utilButtonsGroup
                 Layout.alignment: Qt.AlignVCenter
-                visible: Config.options.bar.verbose && root.useShortenedForm === 0 && implicitWidth > 8
+                visible: Config.options.bar.verbose && root.useShortenedForm === 0 && utilButtonsItem.implicitWidth > 8
                 Layout.preferredWidth: visible ? implicitWidth : 0
+
+                UtilButtons {
+                    id: utilButtonsItem
+                    Layout.alignment: Qt.AlignVCenter
+                }
             }
 
             Item { Layout.fillWidth: true; Layout.fillHeight: true }
@@ -313,7 +338,7 @@ Item { // Bar content region
                 }
             }
 
-            Item { Layout.fillWidth: true; Layout.fillHeight: true }
+            // Removed spacer to allow Resources to anchor to the left edge
         }
     }
 }

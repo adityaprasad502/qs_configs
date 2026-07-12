@@ -178,12 +178,14 @@ Singleton {
         }
     }
 
-    function isSpotifyPlayer(player) {
+    function isSupportedPlayer(player) {
         if (!player) return false;
         let id = (player.identity || "").toLowerCase();
         let entry = (player.desktopEntry || "").toLowerCase();
         let bus = (player.busName || "").toLowerCase();
-        return id.includes("spotify") || entry.includes("spotify") || bus.includes("spotify");
+        let isSpotify = id.includes("spotify") || entry.includes("spotify") || bus.includes("spotify");
+        let isAudacious = id.includes("audacious") || entry.includes("audacious") || bus.includes("audacious");
+        return isSpotify || isAudacious;
     }
 
     function syncTrackChange() {
@@ -194,7 +196,7 @@ Singleton {
             root.currentArtistName = newArtist;
             root.lastKnownPosition = activePlayer?.position || 0;
             root.lastKnownTimestamp = Date.now();
-            if (root.isSpotifyPlayer(activePlayer)) {
+            if (root.isSupportedPlayer(activePlayer)) {
                 root.fetchLyrics(root.currentTrackName, root.currentArtistName);
             } else {
                 root.lyricLines = [];

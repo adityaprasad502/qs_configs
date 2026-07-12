@@ -9,7 +9,7 @@ Item {
     property bool borderless: Config.options.bar.borderless
     property bool showDate: Config.options.bar.verbose
     implicitWidth: rowLayout.implicitWidth
-    implicitHeight: Appearance.sizes.barHeight
+    implicitHeight: rowLayout.implicitHeight
 
     TextMetrics {
         id: timeMetrics
@@ -26,7 +26,7 @@ Item {
             id: timeText
             Layout.preferredWidth: Math.ceil(timeMetrics.advanceWidth)
             horizontalAlignment: Text.AlignRight
-            font.pixelSize: Appearance.font.pixelSize.normal
+            font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.colors.colOnLayer1
             text: DateTime.time
         }

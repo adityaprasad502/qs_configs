@@ -71,15 +71,9 @@ Item {
         anchors.topMargin: 4
         anchors.bottomMargin: 4
         radius: Appearance.rounding.small
-        color: {
-            if (!root.hasMedia) return ColorUtils.transparentize(Appearance.colors.colLayer1, 0.7);
-            if (hoverArea.containsMouse) return ColorUtils.transparentize(Appearance.colors.colLayer1, 0.25);
-            return ColorUtils.transparentize(Appearance.colors.colLayer1, 0.45);
-        }
-
-        border.width: root.isPlaying ? 1 : 0
-        border.color: ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.4)
-        Behavior on border.width { NumberAnimation { duration: 250 } }
+        color: Config.options?.bar.borderless ? "transparent" : (hoverArea.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1)
+        
+        border.width: 0
 
         Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
@@ -213,7 +207,7 @@ Item {
                 }
                 let artistStr = activePlayer?.trackArtist || "";
                 let baseInfo = `${cleanedTitle}${artistStr ? ' • ' + artistStr : ''}`;
-                if (LyricsService.isSpotifyPlayer(activePlayer)) {
+                if (LyricsService.isSupportedPlayer(activePlayer)) {
                     if (LyricsService.loading) {
                         return `${baseInfo} • Fetching lyrics…`;
                     }

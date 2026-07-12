@@ -129,10 +129,7 @@ Item {
             }
         }
 
-        BatteryIndicator {
-            visible: Battery.available
-            Layout.alignment: Qt.AlignVCenter
-        }
+
 
         Repeater {
             model: ScriptModel {
