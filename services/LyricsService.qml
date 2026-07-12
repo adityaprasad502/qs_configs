@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
+import qs
 import qs.modules.common
 import qs.modules.common.functions
 
@@ -30,30 +31,41 @@ Singleton {
         return String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
     }
 
-    function findBestResult(results, targetTrack, targetArtist) {
+    function findBestResult(results, targetTrack, targetArtist, targetDuration) {
         if (!results || !Array.isArray(results) || results.length === 0) return null;
         let normTrack = root.normalizeStr(targetTrack);
         let normArtist = root.normalizeStr(targetArtist);
+
+        let bestResult = null;
+        let bestScore = -9999;
 
         for (let i = 0; i < results.length; i++) {
             let r = results[i];
             if (!r || !r.syncedLyrics) continue;
             let rTrack = root.normalizeStr(r.trackName);
             let rArtist = root.normalizeStr(r.artistName);
-            if ((rTrack === normTrack || (normTrack.length > 2 && (rTrack.includes(normTrack) || normTrack.includes(rTrack)))) &&
-                (!normArtist || rArtist.includes(normArtist) || normArtist.includes(rArtist))) {
-                return r;
+
+            let score = 0;
+            if (rTrack === normTrack) score += 50;
+            else if (normTrack.length > 2 && (rTrack.includes(normTrack) || normTrack.includes(rTrack))) score += 25;
+
+            if (rArtist === normArtist) score += 40;
+            else if (!normArtist || rArtist.includes(normArtist) || normArtist.includes(rArtist)) score += 20;
+
+            if (targetDuration > 0 && r.duration) {
+                let diff = Math.abs(r.duration - targetDuration);
+                if (diff <= 2) score += 35;
+                else if (diff <= 5) score += 20;
+                else if (diff > 15) score -= 30;
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestResult = r;
             }
         }
 
-        for (let i = 0; i < results.length; i++) {
-            let r = results[i];
-            if (!r || !r.syncedLyrics) continue;
-            let rTrack = root.normalizeStr(r.trackName);
-            if (rTrack === normTrack || (normTrack.length > 2 && (rTrack.includes(normTrack) || normTrack.includes(rTrack)))) {
-                return r;
-            }
-        }
+        if (bestResult) return bestResult;
 
         for (let i = 0; i < results.length; i++) {
             if (results[i] && results[i].syncedLyrics) return results[i];
@@ -90,17 +102,47 @@ Singleton {
             return;
         }
 
+        let targetDuration = Math.round(activePlayer?.length || 0);
+
+        if (targetDuration > 0) {
+            let getUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTrack)}&artist_name=${encodeURIComponent(cleanArtist)}&duration=${targetDuration}`;
+            var getXhr = new XMLHttpRequest();
+            getXhr.onreadystatechange = function() {
+                if (getXhr.readyState === XMLHttpRequest.DONE) {
+                    if (myFetchId !== root.currentFetchId) return;
+                    if (getXhr.status === 200) {
+                        try {
+                            var data = JSON.parse(getXhr.responseText);
+                            if (data && (data.syncedLyrics || data.plainLyrics)) {
+                                root.loading = false;
+                                root.lyricCache[cacheKey] = data;
+                                root.parseLyricsResponse(data);
+                                return;
+                            }
+                        } catch(e) {}
+                    }
+                    root.searchLyricsFallback(myFetchId, cleanTrack, cleanArtist, targetDuration, cacheKey);
+                }
+            };
+            getXhr.open("GET", getUrl, true);
+            getXhr.send();
+        } else {
+            root.searchLyricsFallback(myFetchId, cleanTrack, cleanArtist, targetDuration, cacheKey);
+        }
+    }
+
+    function searchLyricsFallback(fetchId, cleanTrack, cleanArtist, targetDuration, cacheKey) {
         let query = `${cleanTrack} ${cleanArtist}`.trim();
         let url = `https://lrclib.net/api/search?q=${encodeURIComponent(query)}`;
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (myFetchId !== root.currentFetchId) return;
+                if (fetchId !== root.currentFetchId) return;
                 root.loading = false;
                 if (xhr.status === 200) {
                     try {
                         var results = JSON.parse(xhr.responseText);
-                        let best = root.findBestResult(results, cleanTrack, cleanArtist);
+                        let best = root.findBestResult(results, cleanTrack, cleanArtist, targetDuration);
                         if (best) {
                             root.lyricCache[cacheKey] = best;
                             root.parseLyricsResponse(best);
@@ -179,22 +221,53 @@ Singleton {
         function onActivePlayerChanged() { root.syncTrackChange(); }
     }
 
-    function weightedLength(str) {
-        if (!str) return 0;
-        let w = 0;
-        for (let i = 0; i < str.length; i++) {
-            w += (str.charCodeAt(i) > 127) ? 2.2 : 1.0;
-        }
-        return w;
+    TextMetrics {
+        id: lyricMetrics
+        font.family: Appearance?.font?.family?.main ?? ""
+        font.pixelSize: Appearance?.font?.pixelSize?.small ?? 15
     }
 
-    function canJoinLines(lines, k) {
-        if (k < 0 || k + 1 >= lines.length) return false;
-        let l1 = lines[k];
-        let l2 = lines[k + 1];
-        let w1 = weightedLength(l1.text);
-        let w2 = weightedLength(l2.text);
-        return (w1 < 44 && (w1 + w2) < 82 && (l2.time - l1.time) <= 6.5);
+    function measurePixelWidth(str) {
+        if (!str) return 0;
+        lyricMetrics.text = str;
+        return lyricMetrics.advanceWidth;
+    }
+
+    function findGroupForIndex(lines, targetIdx) {
+        if (!lines || targetIdx < 0 || targetIdx >= lines.length) {
+            return { startIdx: -1, endIdx: -1, text: "", nextStartIdx: -1 };
+        }
+        let maxAllowedPx = Math.max(140, (GlobalStates?.topBarMediaWidth ?? 440) - 150);
+        let i = 0;
+        while (i < lines.length) {
+            let start = i;
+            let groupText = lines[i].text;
+            let currentPx = root.measurePixelWidth(groupText);
+            let j = i + 1;
+
+            if (currentPx < maxAllowedPx * 0.65) {
+                while (j < lines.length) {
+                    let nextText = lines[j].text;
+                    let candidateText = groupText + " • " + nextText;
+                    let candidatePx = root.measurePixelWidth(candidateText);
+                    let gap = lines[j].time - lines[j - 1].time;
+                    let totalSpan = lines[j].time - lines[start].time;
+                    if (gap <= 3.4 && totalSpan <= 7.0 && candidatePx <= maxAllowedPx) {
+                        groupText = candidateText;
+                        currentPx = candidatePx;
+                        j++;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            if (targetIdx >= start && targetIdx < j) {
+                return { startIdx: start, endIdx: j - 1, text: groupText, nextStartIdx: j };
+            }
+            i = j;
+        }
+        return { startIdx: targetIdx, endIdx: targetIdx, text: lines[targetIdx].text, nextStartIdx: targetIdx + 1 };
     }
 
     Timer {
@@ -229,47 +302,17 @@ Singleton {
             let isJoined = false;
 
             if (currIdx >= 0) {
-                let pairStartIdx = currIdx;
-                let i = 0;
-                while (i < lines.length) {
-                    if (root.canJoinLines(lines, i)) {
-                        if (i === currIdx || i + 1 === currIdx) {
-                            pairStartIdx = i;
-                            isJoined = true;
-                            break;
-                        }
-                        i += 2;
-                    } else {
-                        if (i === currIdx) {
-                            pairStartIdx = i;
-                            isJoined = false;
-                            break;
-                        }
-                        i += 1;
-                    }
-                }
+                let currGroup = root.findGroupForIndex(lines, currIdx);
+                newCurrentLine = currGroup.text;
+                isJoined = (currGroup.endIdx > currGroup.startIdx);
 
-                let nextGroupIdx = isJoined ? pairStartIdx + 2 : pairStartIdx + 1;
-
-                if (isJoined) {
-                    newCurrentLine = lines[pairStartIdx].text + " • " + lines[pairStartIdx + 1].text;
-                } else {
-                    newCurrentLine = lines[pairStartIdx].text;
-                }
-
-                if (nextGroupIdx < lines.length) {
-                    if (root.canJoinLines(lines, nextGroupIdx)) {
-                        newNextLine = lines[nextGroupIdx].text + " • " + lines[nextGroupIdx + 1].text;
-                    } else {
-                        newNextLine = lines[nextGroupIdx].text;
-                    }
+                if (currGroup.nextStartIdx < lines.length) {
+                    let nextGroup = root.findGroupForIndex(lines, currGroup.nextStartIdx);
+                    newNextLine = nextGroup.text;
                 }
             } else if (lines.length > 0) {
-                if (root.canJoinLines(lines, 0)) {
-                    newNextLine = lines[0].text + " • " + lines[1].text;
-                } else {
-                    newNextLine = lines[0].text;
-                }
+                let firstGroup = root.findGroupForIndex(lines, 0);
+                newNextLine = firstGroup.text;
             }
 
             if (root.currentLyricLine !== newCurrentLine) root.currentLyricLine = newCurrentLine;

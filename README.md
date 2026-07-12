@@ -18,10 +18,10 @@ Below is a breakdown of the enhancements and features introduced on top of the o
 
 ### 1. 🎵 Real-Time Synchronized Lyrics
 
-- **Live Spotify Lyrics**: Automatically fetches and displays real-time synchronized lyrics for Spotify tracks.
-- **Smart Line Pairing**: Seamlessly groups short lyric lines into natural phrases without overlapping or repeating lines, supporting both English and international languages.
-- **Live Preview**: Streams current lyrics directly to the top bar while showing the upcoming lyric line inside the Media Controls popup.
-- **Clean Status Display**: Shows helpful status messages (`Fetching lyrics…` or `No lyrics`) for Spotify tracks, while keeping YouTube videos and other media players clean and uncluttered.
+- **Precision 2-Stage Lyrics Lookup**: Uses exact track duration matching (`/api/get`) with smart scored fallback search (`/api/search`) to prevent live, acoustic, or remix version mismatches.
+- **Dynamic Pixel-Accurate Multiline Stitching**: Uses Qt native font measurement (`TextMetrics`) and dynamic bar width to stitch short phrases (`Line 1 • Line 2`) perfectly across **all languages & scripts** (English, Tamil, Malayalam, CJK, etc.) without overflowing the top bar.
+- **Duration Proximity Grouping**: Intelligently stitches short consecutive ad-libs sung in quick succession (`gap <= 3.4s`) while respecting vocal pauses and instrumental breaks.
+- **Live Preview & Clean Status**: Streams current lyrics directly to the top bar while showing upcoming lines inside the Media Controls popup, displaying clean status messages (`Fetching lyrics…` or `No lyrics`) exclusively for Spotify.
 
 ### 2. 🖥️ Interactive Top Bar & Media Controls Popup
 

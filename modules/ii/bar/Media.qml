@@ -166,7 +166,7 @@ Item {
                 lineWidth: Appearance.rounding.unsharpen
                 value: activePlayer?.position / activePlayer?.length
                 implicitSize: 20
-                colPrimary: Appearance.colors.colOnSecondaryContainer
+                colPrimary: Appearance.colors.colSubtext
                 enableAnimation: false
 
                 Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
@@ -181,7 +181,7 @@ Item {
                         fill: 1
                         text: root.isPlaying ? "pause" : "play_arrow"
                         iconSize: Appearance.font.pixelSize.normal
-                        color: Appearance.m3colors.m3onSecondaryContainer
+                        color: Appearance.colors.colSubtext
                     }
                 }
             }
@@ -239,14 +239,14 @@ Item {
                 StyledText {
                     id: topBarMusicText
                     textFormat: Text.PlainText
-                    color: Appearance.colors.colOnLayer1
+                    color: Appearance.colors.colSubtext
                     text: topBarTextContainer.displayText
                 }
 
                 StyledText {
                     visible: topBarTextContainer.isOverflowing && topBarMarqueeAnim.running
                     textFormat: Text.PlainText
-                    color: Appearance.colors.colOnLayer1
+                    color: Appearance.colors.colSubtext
                     text: topBarTextContainer.displayText
                 }
 
