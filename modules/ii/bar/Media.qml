@@ -3,6 +3,7 @@ import qs.modules.common.widgets
 import qs.services
 import qs
 import qs.modules.common.functions
+import Qt5Compat.GraphicalEffects
 
 import QtQuick
 import QtQuick.Layouts
@@ -69,7 +70,7 @@ Item {
         anchors.fill: parent
         anchors.topMargin: 4
         anchors.bottomMargin: 4
-        radius: Appearance.rounding.full
+        radius: Appearance.rounding.small
         color: {
             if (!root.hasMedia) return ColorUtils.transparentize(Appearance.colors.colLayer1, 0.7);
             if (hoverArea.containsMouse) return ColorUtils.transparentize(Appearance.colors.colLayer1, 0.25);
@@ -82,14 +83,23 @@ Item {
 
         Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
-        // Clipped visualizer container
+        // Clipped visualizer container matching pill border radius curve
         Item {
+            id: visualizerContainer
             anchors.fill: parent
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
-            anchors.topMargin: 2
-            anchors.bottomMargin: 2
-            clip: true
+            anchors.leftMargin: 0
+            anchors.rightMargin: 0
+            anchors.topMargin: 1
+            anchors.bottomMargin: 1
+
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: visualizerContainer.width
+                    height: visualizerContainer.height
+                    radius: bgContainer.radius
+                }
+            }
 
             WaveVisualizer {
                 id: visualizerBg

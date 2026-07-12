@@ -285,7 +285,7 @@ Singleton {
             }
 
             let currentPos = root.lastKnownPosition + elapsedSec;
-            let audioSyncPos = Math.max(0, currentPos - 0.35);
+            let audioSyncPos = Math.max(0, currentPos - 0.3);
 
             let lines = root.lyricLines;
             let currIdx = -1;
