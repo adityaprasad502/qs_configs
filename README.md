@@ -19,10 +19,13 @@ Below is a breakdown of the enhancements and features introduced on top of the o
 ### 1. 🎵 Real-Time Synchronized Lyrics
 
 - **Precision 2-Stage Lyrics Lookup**: Uses exact track duration matching (`/api/get`) with smart scored fallback search (`/api/search`) to prevent live, acoustic, or remix version mismatches.
-- **Instant In-Memory Lyrics Caching**: Caches fetched lyrics in memory during your session so repeated tracks or playlist loops load instantly with zero network requests.
-- **Dynamic Pixel-Accurate Multiline Stitching**: Uses Qt native font measurement (`TextMetrics`) and dynamic bar width to stitch short phrases (`Line 1 • Line 2`) perfectly across **all languages & scripts** (English, Tamil, Malayalam, CJK, etc.) without overflowing the top bar.
-- **Duration Proximity Grouping**: Intelligently stitches short consecutive ad-libs sung in quick succession (`gap <= 3.4s`) while respecting vocal pauses and instrumental breaks.
-- **Live Preview & Clean Status**: Streams current lyrics directly to the top bar while showing upcoming lines inside the Media Controls popup, displaying clean status messages (`Fetching lyrics…` or `No lyrics`) exclusively for Spotify.
+- **Instant In-Memory Lyrics Caching**: Caches fetched lyrics in memory (capped at 50 tracks) during your session so repeated tracks load instantly with zero network requests.
+- **O(1) Precomputed Grouping Engine**: Lyrics parsing and multiline joining logic is fully precomputed on track load, resulting in zero overhead O(1) lookups during active playback.
+- **Dynamic Pixel-Accurate Multiline Stitching**: Uses Qt native font measurement (`TextMetrics`) and dynamic bar width to stitch short phrases (`Line 1 • Line 2`) perfectly across **all languages & scripts** without overflowing the top bar.
+- **Smart Repeats (Multiplier)**: Automatically detects consecutive repeated lines (e.g., choruses) and collapses them into a sleek multiplier tag `(x3) → (x2) → (x1)`.
+- **Instrumental Gap & Intro/Outro Timers**: Displays countdowns during long instrumental breaks `(♪ 14s)`, and automatically identifies track intros and outros.
+- **Unsynced Lyrics Support**: Gracefully degrades to an `Unsynced lyrics` indicator if synced timestamps aren't available, saving memory by ditching the heavy payload.
+- **Live Preview & Clean Status**: Streams current lyrics directly to the top bar while showing upcoming lines inside the Media Controls popup, gracefully providing polite fallback statuses during slow networks (`Fetching Lyrics, Trying Harder…`).
 
 ### 2. 🖥️ Interactive Top Bar & Media Controls Popup
 

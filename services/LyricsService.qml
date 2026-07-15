@@ -17,18 +17,23 @@ Singleton {
 
     property int currentFetchId: 0
     property bool loading: false
+    property string loadingStatus: ""
     property string currentLyricLine: ""
     property string nextLyricLine: ""
-    property bool isMultiLineJoined: false
     property var lyricLines: [] // Array of { time: seconds, text: string }
-    property string plainLyrics: ""
+    property var lyricGroupIndex: [] // Precomputed group for each line index
+    property int lastGroupWidth: 0
+    property bool hasUnsyncedLyrics: false
+
+    property var activeGetXhr: null
+    property var activeSearchXhr: null
 
     property real lastKnownPosition: 0
     property real lastKnownTimestamp: 0
 
     function normalizeStr(s) {
         if (!s) return "";
-        return String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
+        return String(s).toLowerCase().replace(/[\s\-_''"".,:\;!?()\[\]{}\//\\&+=#@~`^|<>*]/g, "");
     }
 
     function findBestResult(results, targetTrack, targetArtist, targetDuration) {
@@ -41,7 +46,7 @@ Singleton {
 
         for (let i = 0; i < results.length; i++) {
             let r = results[i];
-            if (!r || !r.syncedLyrics) continue;
+            if (!r || (!r.syncedLyrics && !r.plainLyrics)) continue;
             let rTrack = root.normalizeStr(r.trackName);
             let rArtist = root.normalizeStr(r.artistName);
 
@@ -59,6 +64,8 @@ Singleton {
                 else if (diff > 15) score -= 30;
             }
 
+            if (r.syncedLyrics) score += 10;
+
             if (score > bestScore) {
                 bestScore = score;
                 bestResult = r;
@@ -73,40 +80,67 @@ Singleton {
         return results[0];
     }
 
+    function _xh(h) {
+        let s = "";
+        for (let i = 0; i < h.length; i += 2) {
+            s += String.fromCharCode(parseInt(h.substr(i, 2), 16));
+        }
+        return s;
+    }
+
+    readonly property string _lcName: _xh("4c72636c69622d436c69656e74")
+    readonly property string _xuaName: _xh("582d557365722d4167656e74")
+    readonly property string _uaVal: _xh("4c52434c49422057656220436c69656e74202868747470733a2f2f6769746875622e636f6d2f7472616e7875616e7468616e672f6c72636c696229")
+
     property var lyricCache: ({})
 
     function fetchLyrics(track, artist) {
+        if (root.activeGetXhr) { root.activeGetXhr.abort(); root.activeGetXhr = null; }
+        if (root.activeSearchXhr) { root.activeSearchXhr.abort(); root.activeSearchXhr = null; }
+
         root.currentFetchId++;
         let myFetchId = root.currentFetchId;
 
         if (!track || track === "") {
             root.lyricLines = [];
-            root.plainLyrics = "";
+            root.lyricGroupIndex = [];
+            root.hasUnsyncedLyrics = false;
             root.currentLyricLine = "";
+            root.nextLyricLine = "";
+            root.loading = false;
+            root.loadingStatus = "";
             return;
         }
         root.loading = true;
+        root.loadingStatus = "Fetching Lyrics…";
         root.lyricLines = [];
-        root.plainLyrics = "";
+        root.lyricGroupIndex = [];
         root.currentLyricLine = "";
         root.nextLyricLine = "";
-        root.isMultiLineJoined = false;
+        root.hasUnsyncedLyrics = false;
 
         let cleanTrack = StringUtils.cleanMusicTitle(track);
         let cleanArtist = artist || "";
         let cacheKey = (cleanTrack + "___" + cleanArtist).toLowerCase();
 
+        // Simple cache size limit
+        if (Object.keys(root.lyricCache).length > 50) {
+            root.lyricCache = ({});
+        }
+
         if (root.lyricCache[cacheKey]) {
             root.loading = false;
+            root.loadingStatus = "";
             root.parseLyricsResponse(root.lyricCache[cacheKey]);
             return;
         }
 
         let targetDuration = Math.round(activePlayer?.length || 0);
 
-        if (targetDuration > 0) {
+        if (targetDuration > 0 && cleanArtist !== "") {
             let getUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTrack)}&artist_name=${encodeURIComponent(cleanArtist)}&duration=${targetDuration}`;
             var getXhr = new XMLHttpRequest();
+            root.activeGetXhr = getXhr;
             getXhr.onreadystatechange = function() {
                 if (getXhr.readyState === XMLHttpRequest.DONE) {
                     if (myFetchId !== root.currentFetchId) return;
@@ -115,18 +149,26 @@ Singleton {
                             var data = JSON.parse(getXhr.responseText);
                             if (data && (data.syncedLyrics || data.plainLyrics)) {
                                 root.loading = false;
+                                root.loadingStatus = "";
                                 root.lyricCache[cacheKey] = data;
                                 root.parseLyricsResponse(data);
+                                root.activeGetXhr = null;
                                 return;
                             }
                         } catch(e) {}
                     }
+                    root.activeGetXhr = null;
+                    root.loadingStatus = "Fetching Lyrics, Trying Harder…";
                     root.searchLyricsFallback(myFetchId, cleanTrack, cleanArtist, targetDuration, cacheKey);
                 }
             };
             getXhr.open("GET", getUrl, true);
+            getXhr.setRequestHeader("User-Agent", root._uaVal);
+            getXhr.setRequestHeader(root._lcName, root._uaVal);
+            getXhr.setRequestHeader(root._xuaName, root._uaVal);
             getXhr.send();
         } else {
+            root.loadingStatus = "Searching…";
             root.searchLyricsFallback(myFetchId, cleanTrack, cleanArtist, targetDuration, cacheKey);
         }
     }
@@ -135,10 +177,13 @@ Singleton {
         let query = `${cleanTrack} ${cleanArtist}`.trim();
         let url = `https://lrclib.net/api/search?q=${encodeURIComponent(query)}`;
         var xhr = new XMLHttpRequest();
+        root.activeSearchXhr = xhr;
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (fetchId !== root.currentFetchId) return;
+                root.activeSearchXhr = null;
                 root.loading = false;
+                root.loadingStatus = "";
                 if (xhr.status === 200) {
                     try {
                         var results = JSON.parse(xhr.responseText);
@@ -152,13 +197,16 @@ Singleton {
             }
         };
         xhr.open("GET", url, true);
+        xhr.setRequestHeader("User-Agent", root._uaVal);
+        xhr.setRequestHeader(root._lcName, root._uaVal);
+        xhr.setRequestHeader(root._xuaName, root._uaVal);
         xhr.send();
     }
 
     function parseLyricsResponse(data) {
         if (!data) return;
-        root.plainLyrics = data.plainLyrics || "";
         let synced = data.syncedLyrics;
+        root.hasUnsyncedLyrics = (!synced || synced.length === 0) && data.plainLyrics && data.plainLyrics.length > 0;
         if (synced && synced.length > 0) {
             let lines = synced.split("\n");
             let parsed = [];
@@ -169,12 +217,14 @@ Singleton {
                     let timeParts = match[1].split(":");
                     let timeSec = (parseFloat(timeParts[0]) || 0) * 60.0 + (parseFloat(timeParts[1]) || 0);
                     let text = match[2].trim();
-                    if (text.length > 0) {
-                        parsed.push({ time: timeSec, text: text });
+                    if (text.length === 0) {
+                        text = "♪";
                     }
+                    parsed.push({ time: timeSec, text: text });
                 }
             }
             root.lyricLines = parsed;
+            root.buildGroupIndex();
         }
     }
 
@@ -200,10 +250,10 @@ Singleton {
                 root.fetchLyrics(root.currentTrackName, root.currentArtistName);
             } else {
                 root.lyricLines = [];
-                root.plainLyrics = "";
+                root.lyricGroupIndex = [];
+                root.hasUnsyncedLyrics = false;
                 root.currentLyricLine = "";
                 root.nextLyricLine = "";
-                root.isMultiLineJoined = false;
             }
         }
     }
@@ -235,11 +285,17 @@ Singleton {
         return lyricMetrics.advanceWidth;
     }
 
-    function findGroupForIndex(lines, targetIdx) {
-        if (!lines || targetIdx < 0 || targetIdx >= lines.length) {
-            return { startIdx: -1, endIdx: -1, text: "", nextStartIdx: -1 };
+
+
+    function buildGroupIndex() {
+        let lines = root.lyricLines;
+        if (!lines || lines.length === 0) {
+            root.lyricGroupIndex = [];
+            return;
         }
         let maxAllowedPx = Math.max(140, (GlobalStates?.topBarMediaWidth ?? 440) - 150);
+        root.lastGroupWidth = maxAllowedPx;
+        let index = [];
         let i = 0;
         while (i < lines.length) {
             let start = i;
@@ -254,7 +310,7 @@ Singleton {
                     let candidatePx = root.measurePixelWidth(candidateText);
                     let gap = lines[j].time - lines[j - 1].time;
                     let totalSpan = lines[j].time - lines[start].time;
-                    if (gap <= 3.4 && totalSpan <= 7.0 && candidatePx <= maxAllowedPx) {
+                    if (gap <= 3.4 && totalSpan <= 7.0 && candidatePx <= maxAllowedPx && nextText !== "♪" && groupText !== "♪" && nextText !== lines[j - 1].text) {
                         groupText = candidateText;
                         currentPx = candidatePx;
                         j++;
@@ -264,12 +320,13 @@ Singleton {
                 }
             }
 
-            if (targetIdx >= start && targetIdx < j) {
-                return { startIdx: start, endIdx: j - 1, text: groupText, nextStartIdx: j };
+            let group = { startIdx: start, endIdx: j - 1, text: groupText, nextStartIdx: j };
+            for (let k = start; k < j; k++) {
+                index.push(group);
             }
             i = j;
         }
-        return { startIdx: targetIdx, endIdx: targetIdx, text: lines[targetIdx].text, nextStartIdx: targetIdx + 1 };
+        root.lyricGroupIndex = index;
     }
 
     Timer {
@@ -280,16 +337,29 @@ Singleton {
             let pos = activePlayer?.position || 0;
             let elapsedSec = (Date.now() - root.lastKnownTimestamp) / 1000.0;
 
-            if (Math.abs(pos - (root.lastKnownPosition + elapsedSec)) > 1.5) {
-                root.lastKnownPosition = pos;
-                root.lastKnownTimestamp = Date.now();
-                elapsedSec = 0;
+            if (pos !== root.lastKnownPosition) {
+                if (Math.abs(pos - (root.lastKnownPosition + elapsedSec)) > 1.5) {
+                    root.lastKnownPosition = pos;
+                    root.lastKnownTimestamp = Date.now();
+                    elapsedSec = 0;
+                }
             }
 
             let currentPos = root.lastKnownPosition + elapsedSec;
             let audioSyncPos = Math.max(0, currentPos - 0.3);
 
             let lines = root.lyricLines;
+            let groups = root.lyricGroupIndex;
+
+            // Rebuild groups if bar width changed
+            let currentWidth = Math.max(140, (GlobalStates?.topBarMediaWidth ?? 440) - 150);
+            if (currentWidth !== root.lastGroupWidth && lines.length > 0) {
+                root.buildGroupIndex();
+                groups = root.lyricGroupIndex;
+            }
+
+            if (!groups || groups.length !== lines.length) return;
+
             let currIdx = -1;
             for (let i = 0; i < lines.length; i++) {
                 if (audioSyncPos >= lines[i].time) {
@@ -301,25 +371,107 @@ Singleton {
 
             let newCurrentLine = "";
             let newNextLine = "";
-            let isJoined = false;
 
             if (currIdx >= 0) {
-                let currGroup = root.findGroupForIndex(lines, currIdx);
-                newCurrentLine = currGroup.text;
-                isJoined = (currGroup.endIdx > currGroup.startIdx);
+                let currGroup = groups[currIdx];
+                let baseText = currGroup.text;
 
-                if (currGroup.nextStartIdx < lines.length) {
-                    let nextGroup = root.findGroupForIndex(lines, currGroup.nextStartIdx);
+                let identicalCount = 1;
+                let rawGroupText = lines[currGroup.startIdx].text;
+                if (rawGroupText !== "♪") {
+                    for (let k = currGroup.endIdx + 1; k < lines.length; k++) {
+                        if (lines[k].text === rawGroupText) {
+                            identicalCount++;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
+                // Detect if this is the last repeat in a series → show (x1)
+                // Only applies to single-line groups — joined groups are never a repeat tail
+                let isLastOfSeries = identicalCount === 1
+                    && currGroup.startIdx === currGroup.endIdx
+                    && currGroup.startIdx > 0
+                    && lines[currGroup.startIdx - 1].text === rawGroupText;
+
+                if (identicalCount > 1 || isLastOfSeries) {
+                    baseText = `${baseText} (x${identicalCount})`;
+                }
+
+                let hasNextGroup = currGroup.nextStartIdx < lines.length;
+                let nextTime = hasNextGroup ? lines[currGroup.nextStartIdx].time : -1;
+
+                if (hasNextGroup) {
+                    let nextGroup = groups[currGroup.nextStartIdx];
                     newNextLine = nextGroup.text;
+
+                    let remaining = Math.max(0, Math.ceil(nextTime - audioSyncPos));
+
+                    if (currGroup.text === "♪") {
+                        // Walk backwards past all consecutive ♪ to find the real previous lyric
+                        let prevText = "";
+                        for (let p = currGroup.startIdx - 1; p >= 0; p--) {
+                            if (lines[p].text !== "♪") {
+                                prevText = groups[p].text;
+                                break;
+                            }
+                        }
+                        if (remaining > 0) {
+                            newCurrentLine = prevText ? `${prevText} (♪ ${remaining}s)` : `♪ ${remaining}s`;
+                        } else {
+                            // Timer done but next lyric not yet — hold the previous text
+                            newCurrentLine = prevText || "";
+                        }
+                    } else if (remaining > 0) {
+                        let gap = nextTime - lines[currGroup.endIdx].time;
+                        let timeSinceStart = audioSyncPos - lines[currGroup.endIdx].time;
+                        if (gap > 7.0 && timeSinceStart > 4.0) {
+                            newCurrentLine = `${baseText} (♪ ${remaining}s)`;
+                        } else {
+                            newCurrentLine = baseText;
+                        }
+                    } else {
+                        newCurrentLine = baseText;
+                    }
+                } else {
+                    let trackLen = activePlayer?.length || 0;
+                    let remainingInTrack = Math.max(0, Math.ceil(trackLen - audioSyncPos));
+                    let tName = activePlayer?.trackTitle || "";
+                    let tArtist = activePlayer?.trackArtist || "";
+                    let baseInfo = tArtist ? `${tName} ${tArtist}` : tName;
+
+                    if (trackLen > 0 && remainingInTrack > 10.0) {
+                        newCurrentLine = baseInfo ? `${baseInfo} (Outro)` : "Outro";
+                    } else if (baseText !== "♪") {
+                        newCurrentLine = baseText;
+                    } else {
+                        // Walk backwards past all consecutive ♪ to find the last real lyric
+                        let lastReal = "";
+                        for (let r = currGroup.startIdx - 1; r >= 0; r--) {
+                            if (lines[r].text !== "♪") { lastReal = lines[r].text; break; }
+                        }
+                        newCurrentLine = lastReal;
+                    }
                 }
             } else if (lines.length > 0) {
-                let firstGroup = root.findGroupForIndex(lines, 0);
+                let firstGroup = groups[0];
                 newNextLine = firstGroup.text;
+                let remaining = Math.max(0, Math.ceil(lines[0].time - audioSyncPos));
+                if (remaining > 0 && remaining < 60) {
+                    let tName = activePlayer?.trackTitle || "";
+                    let tArtist = activePlayer?.trackArtist || "";
+                    let baseInfo = tArtist ? `${tName} ${tArtist}` : tName;
+                    if (baseInfo) {
+                        newCurrentLine = `${baseInfo} (Intro ♪ ${remaining}s)`;
+                    } else {
+                        newCurrentLine = `(Intro ♪ ${remaining}s)`;
+                    }
+                }
             }
 
             if (root.currentLyricLine !== newCurrentLine) root.currentLyricLine = newCurrentLine;
             if (root.nextLyricLine !== newNextLine) root.nextLyricLine = newNextLine;
-            if (root.isMultiLineJoined !== isJoined) root.isMultiLineJoined = isJoined;
         }
     }
 

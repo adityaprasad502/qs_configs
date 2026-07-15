@@ -209,10 +209,10 @@ Item {
                 let baseInfo = `${cleanedTitle}${artistStr ? ' • ' + artistStr : ''}`;
                 if (LyricsService.isSupportedPlayer(activePlayer)) {
                     if (LyricsService.loading) {
-                        return `${baseInfo} • Fetching lyrics…`;
+                        return `${baseInfo} • ${LyricsService.loadingStatus}`;
                     }
                     if (LyricsService.lyricLines.length === 0) {
-                        return `${baseInfo} • No lyrics`;
+                        return LyricsService.hasUnsyncedLyrics ? `${baseInfo} • Unsynced lyrics` : `${baseInfo} • No lyrics`;
                     }
                 }
                 return baseInfo;
