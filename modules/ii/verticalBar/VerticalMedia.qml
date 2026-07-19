@@ -16,6 +16,16 @@ MouseArea {
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
     readonly property bool isPlaying: activePlayer?.playbackState === MprisPlaybackState.Playing
     readonly property bool hasMedia: activePlayer != null && (root.isPlaying || (StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || "") !== "")
+    readonly property bool isLive: {
+        if (!activePlayer || !root.hasMedia) return false;
+        let len = activePlayer?.length || 0;
+        let pos = activePlayer?.position || 0;
+        let canSeek = activePlayer?.canSeek ?? false;
+        if (len <= 0) return true;
+        if (!canSeek) return true;
+        if (len > 0 && Math.max(0, len - pos) <= 0) return true;
+        return false;
+    }
     readonly property string cleanedTitle: StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || Translation.tr("No media")
 
     Layout.fillHeight: true
@@ -50,7 +60,7 @@ MouseArea {
         implicitSize: 20
 
         lineWidth: Appearance.rounding.unsharpen
-        value: activePlayer?.position / activePlayer?.length
+        value: root.isLive ? 1 : (activePlayer?.position / activePlayer?.length)
         colPrimary: Appearance.colors.colOnSecondaryContainer
         enableAnimation: false
 

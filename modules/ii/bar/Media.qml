@@ -36,6 +36,16 @@ Item {
     readonly property bool isPaused: activePlayer != null && !root.isPlaying
     readonly property bool hasMedia: activePlayer != null && (root.isPlaying || (StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || "") !== "")
     readonly property bool hasLyrics: root.isPlaying && LyricsService.currentLyricLine && LyricsService.currentLyricLine.length > 0
+    readonly property bool isLive: {
+        if (!activePlayer || !root.hasMedia) return false;
+        let len = activePlayer?.length || 0;
+        let pos = activePlayer?.position || 0;
+        let canSeek = activePlayer?.canSeek ?? false;
+        if (len <= 0) return true;
+        if (!canSeek) return true;
+        if (len > 0 && Math.max(0, len - pos) <= 0) return true;
+        return false;
+    }
 
     Process {
         id: cavaProc
@@ -168,7 +178,7 @@ Item {
                 visible: root.hasMedia
                 opacity: visible ? 1 : 0
                 lineWidth: Appearance.rounding.unsharpen
-                value: activePlayer?.position / activePlayer?.length
+                value: root.isLive ? 1 : (activePlayer?.position / activePlayer?.length)
                 implicitSize: 20
                 colPrimary: Appearance.colors.colSubtext
                 enableAnimation: false
@@ -270,11 +280,12 @@ Item {
 
         StyledText {
             id: trackTimeText
-            visible: root.hasMedia && (activePlayer?.length || 0) > 0
+            visible: root.hasMedia && (root.isLive || (activePlayer?.length || 0) > 0)
             Layout.alignment: Qt.AlignVCenter
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.colors.colSubtext
             text: {
+                if (root.isLive) return Translation.tr("live");
                 let pos = Math.max(0, activePlayer?.position || 0);
                 let len = Math.max(0, activePlayer?.length || 0);
                 let rem = Math.max(0, len - pos);

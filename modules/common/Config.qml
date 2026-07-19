@@ -566,7 +566,7 @@ Singleton {
                 property string format: "hh:mm"
                 property string shortDateFormat: "dd/MM"
                 property string dateWithYearFormat: "dd/MM/yyyy"
-                property string dateFormat: "ddd, dd/MM"
+                property string dateFormat: "dd/MM"
                 property JsonObject pomodoro: JsonObject {
                     property int breakTime: 300
                     property int cyclesBeforeLongBreak: 4

@@ -31,7 +31,7 @@ Singleton {
     }
     property string shortDate: Qt.locale().toString(clock.date, Config.options?.time.shortDateFormat ?? "dd/MM")
     property string date: Qt.locale().toString(clock.date, Config.options?.time.dateWithYearFormat ?? "dd/MM/yyyy")
-    property string longDate: Qt.locale().toString(clock.date, Config.options?.time.dateFormat ?? "dddd, dd/MM")
+    property string longDate: Qt.locale().toString(clock.date, Config.options?.time.dateFormat ?? "dd/MM")
     property string collapsedCalendarFormat: Qt.locale().toString(clock.date, "dddd, MMMM dd")
     property string uptime: "0h, 0m"
 

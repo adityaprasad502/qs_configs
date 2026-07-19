@@ -329,8 +329,21 @@ Item { // Bar content region
 
             Item { Layout.fillWidth: true; Layout.fillHeight: true }
 
+            // Network Speed
+            BarGroup {
+                id: networkSpeedGroup
+                Layout.alignment: Qt.AlignVCenter
+
+                NetworkSpeedMeter {
+                    Layout.alignment: Qt.AlignVCenter
+                }
+            }
+
+            Item { Layout.fillWidth: true; Layout.fillHeight: true }
+
             // Stats (Resources)
             BarGroup {
+                id: resourcesGroup
                 Layout.alignment: Qt.AlignVCenter
 
                 Resources {

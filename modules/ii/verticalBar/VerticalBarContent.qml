@@ -95,6 +95,13 @@ Item { // Bar content region
             
             HorizontalBarSeparator {}
 
+            NetworkSpeedMeter {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+            }
+
+            HorizontalBarSeparator {}
+
             VerticalMedia {
                 Layout.fillWidth: true
                 Layout.fillHeight: false

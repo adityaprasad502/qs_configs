@@ -22,6 +22,16 @@ Item { // Player instance
     property string artFilePath: `${artDownloadLocation}/${artFileName}`
     property color artDominantColor: ColorUtils.mix((colorQuantizer?.colors[0] ?? Appearance.colors.colPrimary), Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
     property bool downloaded: false
+    readonly property bool isLive: {
+        if (!root.player) return false;
+        let len = root.player?.length || 0;
+        let pos = root.player?.position || 0;
+        let canSeek = root.player?.canSeek ?? false;
+        if (len <= 0) return true;
+        if (!canSeek) return true;
+        if (len > 0 && Math.max(0, len - pos) <= 0) return true;
+        return false;
+    }
     property list<real> visualizerPoints: []
     property real maxVisualizerValue: 850 // Max value in the data points
     property int visualizerSmoothing: 1 // Number of points to average for smoothing
@@ -422,7 +432,7 @@ Item { // Player instance
                         font.pixelSize: Appearance.font.pixelSize.small
                         color: blendedColors.colSubtext
                         elide: Text.ElideRight
-                        text: StringUtils.friendlyTimeForSeconds(root.player?.length)
+                        text: root.isLive ? Translation.tr("live") : StringUtils.friendlyTimeForSeconds(root.player?.length)
                     }
                     RowLayout {
                         id: sliderRow
@@ -443,7 +453,7 @@ Item { // Player instance
                             Loader {
                                 id: sliderLoader
                                 anchors.fill: parent
-                                active: root.player?.canSeek ?? false
+                                active: (root.player?.canSeek ?? false) && !root.isLive
                                 sourceComponent: StyledSlider { 
                                     configuration: StyledSlider.Configuration.Wavy
                                     highlightColor: blendedColors.colPrimary
@@ -467,12 +477,12 @@ Item { // Player instance
                                     left: parent.left
                                     right: parent.right
                                 }
-                                active: !(root.player?.canSeek ?? false)
+                                active: !(root.player?.canSeek ?? false) || root.isLive
                                 sourceComponent: StyledProgressBar { 
                                     wavy: root.player?.isPlaying
                                     highlightColor: blendedColors.colPrimary
                                     trackColor: blendedColors.colSecondaryContainer
-                                    value: root.interpolatedPosition / root.player?.length
+                                    value: (root.isLive && (root.player?.length || 0) <= 0) ? 1 : (root.interpolatedPosition / (root.player?.length || 1))
                                 }
                             }
 
