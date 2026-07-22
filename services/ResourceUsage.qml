@@ -32,13 +32,14 @@ Singleton {
     property real previousNetworkTimestamp: 0
 
     function formatNetworkSpeed(bytesPerSec) {
-        if (bytesPerSec < 1024) return Math.round(bytesPerSec) + " B/s";
-        if (bytesPerSec < 1024 * 1024) {
-            const kb = bytesPerSec / 1024;
-            return (kb >= 100 ? Math.round(kb) : kb.toFixed(1)) + " KB/s";
+        const bitsPerSec = bytesPerSec * 8;
+        if (bitsPerSec < 1000) return Math.round(bitsPerSec) + " bps";
+        if (bitsPerSec < 1000 * 1000) {
+            const kb = bitsPerSec / 1000;
+            return (kb >= 100 ? Math.round(kb) : kb.toFixed(1)) + " Kbps";
         }
-        const mb = bytesPerSec / (1024 * 1024);
-        return (mb >= 100 ? Math.round(mb) : mb.toFixed(1)) + " MB/s";
+        const mb = bitsPerSec / (1000 * 1000);
+        return (mb >= 100 ? Math.round(mb) : mb.toFixed(1)) + " Mbps";
     }
 
     function formatNetworkTotal(bytes) {

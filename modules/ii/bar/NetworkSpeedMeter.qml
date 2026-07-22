@@ -7,71 +7,97 @@ import QtQuick.Layouts
 MouseArea {
     id: root
     property bool borderless: Config.options.bar.borderless
-    implicitWidth: columnLayout.implicitWidth + columnLayout.anchors.leftMargin + columnLayout.anchors.rightMargin
+    implicitWidth: column.implicitWidth + 12
     implicitHeight: Appearance.sizes.barHeight
     hoverEnabled: !Config.options.bar.tooltips.clickToShow
 
     TextMetrics {
-        id: speedTextMetrics
-        text: "88.8 MB/s"
+        id: speedNumberMetrics
+        text: "888.8"
+        font.pixelSize: Appearance.font.pixelSize.smaller
+        font.weight: Font.Bold
+    }
+    TextMetrics {
+        id: speedUnitMetrics
+        text: "Mbps"
         font.pixelSize: Appearance.font.pixelSize.smallest
     }
 
-    ColumnLayout {
-        id: columnLayout
-        spacing: 0
+    Column {
+        id: column
+        spacing: -1
         anchors.centerIn: parent
-        anchors.leftMargin: 6
-        anchors.rightMargin: 6
 
         // Download speed
-        RowLayout {
+        Row {
             spacing: 3
-            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+            anchors.horizontalCenter: parent.horizontalCenter
 
             MaterialSymbol {
                 text: "arrow_downward"
                 iconSize: Appearance.font.pixelSize.smaller
                 color: ResourceUsage.networkRxSpeed > 1024 ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                anchors.verticalCenter: rxItem.verticalCenter
             }
 
             Item {
-                Layout.alignment: Qt.AlignVCenter
-                implicitWidth: speedTextMetrics.width
-                implicitHeight: speedTextMetrics.height
+                id: rxItem
+                width: Math.ceil(speedNumberMetrics.advanceWidth) + 2 + Math.ceil(speedUnitMetrics.advanceWidth)
+                height: rxNumberText.implicitHeight
 
                 StyledText {
+                    id: rxNumberText
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     color: Appearance.colors.colOnLayer1
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.weight: Font.Bold
+                    text: ResourceUsage.formatNetworkSpeed(ResourceUsage.networkRxSpeed).split(" ")[0]
+                }
+                StyledText {
+                    anchors.left: rxNumberText.right
+                    anchors.leftMargin: 3
+                    anchors.baseline: rxNumberText.baseline
+                    color: Appearance.colors.colSubtext
                     font.pixelSize: Appearance.font.pixelSize.smallest
-                    text: ResourceUsage.formatNetworkSpeed(ResourceUsage.networkRxSpeed)
+                    text: ResourceUsage.formatNetworkSpeed(ResourceUsage.networkRxSpeed).split(" ")[1]
                 }
             }
         }
 
         // Upload speed
-        RowLayout {
+        Row {
             spacing: 3
-            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+            anchors.horizontalCenter: parent.horizontalCenter
 
             MaterialSymbol {
                 text: "arrow_upward"
                 iconSize: Appearance.font.pixelSize.smaller
                 color: ResourceUsage.networkTxSpeed > 1024 ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                anchors.verticalCenter: txItem.verticalCenter
             }
 
             Item {
-                Layout.alignment: Qt.AlignVCenter
-                implicitWidth: speedTextMetrics.width
-                implicitHeight: speedTextMetrics.height
+                id: txItem
+                width: Math.ceil(speedNumberMetrics.advanceWidth) + 2 + Math.ceil(speedUnitMetrics.advanceWidth)
+                height: txNumberText.implicitHeight
 
                 StyledText {
+                    id: txNumberText
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     color: Appearance.colors.colOnLayer1
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.weight: Font.Bold
+                    text: ResourceUsage.formatNetworkSpeed(ResourceUsage.networkTxSpeed).split(" ")[0]
+                }
+                StyledText {
+                    anchors.left: txNumberText.right
+                    anchors.leftMargin: 3
+                    anchors.baseline: txNumberText.baseline
+                    color: Appearance.colors.colSubtext
                     font.pixelSize: Appearance.font.pixelSize.smallest
-                    text: ResourceUsage.formatNetworkSpeed(ResourceUsage.networkTxSpeed)
+                    text: ResourceUsage.formatNetworkSpeed(ResourceUsage.networkTxSpeed).split(" ")[1]
                 }
             }
         }
