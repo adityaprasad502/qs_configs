@@ -9,13 +9,33 @@ Row {
     required property var label
     spacing: 5
 
-    MaterialSymbol {
+    property bool iconIsMaterial: true
+
+    Item {
         anchors.verticalCenter: parent.verticalCenter
-        fill: 0
-        font.weight: Font.DemiBold
-        text: root.icon
-        iconSize: Appearance.font.pixelSize.large
-        color: Appearance.colors.colOnSurfaceVariant
+        implicitWidth: Math.max(materialIcon.implicitWidth, textIcon.implicitWidth)
+        implicitHeight: Math.max(materialIcon.implicitHeight, textIcon.implicitHeight)
+
+        MaterialSymbol {
+            id: materialIcon
+            anchors.centerIn: parent
+            fill: 0
+            font.weight: Font.DemiBold
+            text: root.icon
+            iconSize: Appearance.font.pixelSize.large
+            color: Appearance.colors.colOnSurfaceVariant
+            visible: root.iconIsMaterial
+        }
+        
+        StyledText {
+            id: textIcon
+            anchors.centerIn: parent
+            text: root.icon
+            font.weight: Font.DemiBold
+            font.pixelSize: Appearance.font.pixelSize.large
+            color: Appearance.colors.colOnSurfaceVariant
+            visible: !root.iconIsMaterial
+        }
     }
 
     StyledText {

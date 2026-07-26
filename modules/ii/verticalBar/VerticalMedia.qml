@@ -72,9 +72,17 @@ MouseArea {
             MaterialSymbol {
                 anchors.centerIn: parent
                 fill: 1
-                text: activePlayer?.isPlaying ? "pause" : (root.hasMedia ? "play_arrow" : "auto_awesome")
+                text: activePlayer?.isPlaying ? "pause" : "play_arrow"
                 iconSize: Appearance.font.pixelSize.normal
                 color: Appearance.m3colors.m3onSecondaryContainer
+                visible: root.hasMedia
+            }
+            StyledText {
+                anchors.centerIn: parent
+                text: "󰣇"
+                font.pixelSize: Appearance.font.pixelSize.normal
+                color: Appearance.m3colors.m3onSecondaryContainer
+                visible: !root.hasMedia
             }
         }
     }
@@ -88,7 +96,8 @@ MouseArea {
             spacing: 4
 
             Bar.StyledPopupHeaderRow {
-                icon: root.hasMedia ? "music_note" : "auto_awesome"
+                icon: root.hasMedia ? "music_note" : "󰣇"
+                iconIsMaterial: root.hasMedia
                 label: root.hasMedia ? Translation.tr("Media") : Translation.tr("Quote")
             }
 

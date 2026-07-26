@@ -159,12 +159,11 @@ Item {
             implicitHeight: 20
 
             // Quote icon (no player active)
-            MaterialSymbol {
+            StyledText {
                 id: quoteIcon
                 anchors.centerIn: parent
-                fill: 1
-                text: "auto_awesome"
-                iconSize: Appearance.font.pixelSize.normal
+                text: "󰣇"
+                font.pixelSize: Appearance.font.pixelSize.normal
                 color: Appearance.colors.colSubtext
                 visible: !root.hasMedia
                 opacity: visible ? 1 : 0

@@ -30,7 +30,7 @@ Singleton {
     Process {
         id: getKeybinds
         running: true
-        command: ["hyprctl", "binds", "-j"]
+        command: ["lua", "/home/pu94x/.config/quickshell/ii/scripts/hyprland/get_keybinds.lua"]
         
         stdout: StdioCollector {
             onStreamFinished: {
@@ -39,9 +39,11 @@ Singleton {
                     var groups = []
                     for (var i = 0; i < root.keybinds.length; i++) {
                         var bind = root.keybinds[i].description
-                        var group = bind.substring(0, bind.indexOf(":"))
-                        if (!groups.includes(group) && group.length > 0) {
-                            groups.push(group)
+                        if (bind) {
+                            var group = bind.substring(0, bind.indexOf(":"))
+                            if (!groups.includes(group) && group.length > 0) {
+                                groups.push(group)
+                            }
                         }
                     }
                     root.keybindCategories = groups
