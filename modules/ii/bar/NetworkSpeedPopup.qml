@@ -12,31 +12,46 @@ StyledPopup {
         spacing: 8
 
         StyledPopupHeaderRow {
+            anchors.horizontalCenter: parent.horizontalCenter
             icon: "lan"
             label: (Network.networkName && Network.networkName.length > 0) ? Network.networkName : Translation.tr("Network Traffic")
         }
 
-        Column {
-            spacing: 4
-            StyledPopupValueRow {
-                icon: "arrow_downward"
-                label: Translation.tr("Download Speed:")
+        GridLayout {
+            columns: 2
+            rowSpacing: 5
+            columnSpacing: 5
+            uniformCellWidths: true
+
+            NetworkCard {
+                symbol: "arrow_downward"
+                title: Translation.tr("Download")
                 value: ResourceUsage.formatNetworkSpeed(ResourceUsage.networkRxSpeed)
             }
-            StyledPopupValueRow {
-                icon: "arrow_upward"
-                label: Translation.tr("Upload Speed:")
+            NetworkCard {
+                symbol: "arrow_upward"
+                title: Translation.tr("Upload")
                 value: ResourceUsage.formatNetworkSpeed(ResourceUsage.networkTxSpeed)
             }
-            StyledPopupValueRow {
-                icon: "download"
-                label: Translation.tr("Total Downloaded:")
+            NetworkCard {
+                symbol: "download"
+                title: Translation.tr("Total Down")
                 value: ResourceUsage.formatNetworkTotal(ResourceUsage.networkTotalRxBytes)
             }
-            StyledPopupValueRow {
-                icon: "upload"
-                label: Translation.tr("Total Uploaded:")
+            NetworkCard {
+                symbol: "upload"
+                title: Translation.tr("Total Up")
                 value: ResourceUsage.formatNetworkTotal(ResourceUsage.networkTotalTxBytes)
+            }
+            NetworkCard {
+                symbol: "router"
+                title: Translation.tr("Local IP")
+                value: Network.localIp || "---"
+            }
+            NetworkCard {
+                symbol: Network.ethernet ? "settings_ethernet" : "wifi"
+                title: Translation.tr("Type")
+                value: Network.ethernet ? "Ethernet" : (Network.wifi ? "Wi-Fi" : "Offline")
             }
         }
     }

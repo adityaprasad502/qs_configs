@@ -152,12 +152,26 @@ Singleton {
         }
     }
 
+    property string localIp: ""
+
     // Status update
     function update() {
         updateConnectionType.startCheck();
         wifiStatusProcess.running = true
         updateNetworkName.running = true;
         updateNetworkStrength.running = true;
+        updateLocalIp.running = true;
+    }
+
+    Process {
+        id: updateLocalIp
+        running: true
+        command: ["sh", "-c", "ip -4 addr show | grep inet | grep -v 127.0.0.1 | awk '{print $2}' | cut -d/ -f1 | head -n1"]
+        stdout: SplitParser {
+            onRead: data => {
+                root.localIp = data.trim();
+            }
+        }
     }
 
     Process {
