@@ -44,14 +44,33 @@ StyledPopup {
                 value: ResourceUsage.formatNetworkTotal(ResourceUsage.networkTotalTxBytes)
             }
             NetworkCard {
-                symbol: "router"
-                title: Translation.tr("Local IP")
-                value: Network.localIp || "---"
-            }
-            NetworkCard {
                 symbol: Network.ethernet ? "settings_ethernet" : "wifi"
                 title: Translation.tr("Type")
                 value: Network.ethernet ? "Ethernet" : (Network.wifi ? "Wi-Fi" : "Offline")
+            }
+            NetworkCard {
+                symbol: "router"
+                title: Translation.tr("Interface")
+                value: Network.interfaceName || "---"
+            }
+            // Wi-Fi-only: band and signal
+            NetworkCard {
+                visible: Network.wifi && !Network.ethernet
+                symbol: "wifi_tethering"
+                title: Translation.tr("Band")
+                value: {
+                    const freq = Network.active?.frequency ?? 0;
+                    if (freq <= 0) return "---";
+                    if (freq >= 5945) return "6 GHz";
+                    if (freq >= 5000) return "5 GHz";
+                    return "2.4 GHz";
+                }
+            }
+            NetworkCard {
+                visible: Network.wifi && !Network.ethernet
+                symbol: "signal_cellular_alt"
+                title: Translation.tr("Signal")
+                value: Network.active ? (Network.active.strength + "%") : "---"
             }
         }
     }

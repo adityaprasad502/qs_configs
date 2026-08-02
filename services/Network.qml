@@ -152,7 +152,7 @@ Singleton {
         }
     }
 
-    property string localIp: ""
+    property string interfaceName: ""
 
     // Status update
     function update() {
@@ -160,16 +160,19 @@ Singleton {
         wifiStatusProcess.running = true
         updateNetworkName.running = true;
         updateNetworkStrength.running = true;
-        updateLocalIp.running = true;
+        updateInterfaceName.running = true;
     }
 
+    // `ip route show default` output: "default via <gw> dev <iface> ..."
     Process {
-        id: updateLocalIp
+        id: updateInterfaceName
         running: true
-        command: ["sh", "-c", "ip -4 addr show | grep inet | grep -v 127.0.0.1 | awk '{print $2}' | cut -d/ -f1 | head -n1"]
+        command: ["ip", "route", "show", "default"]
         stdout: SplitParser {
             onRead: data => {
-                root.localIp = data.trim();
+                const parts = data.trim().split(/\s+/);
+                const devIdx = parts.indexOf("dev");
+                if (devIdx !== -1) root.interfaceName = parts[devIdx + 1] ?? "";
             }
         }
     }
