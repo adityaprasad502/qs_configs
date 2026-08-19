@@ -6,67 +6,67 @@ import QtQuick.Layouts
 
 StyledPopup {
     id: root
-    
-    ColumnLayout {
-        id: columnLayout
+    // Time formatter helper
+    function formatTime(seconds) {
+        var h = Math.floor(seconds / 3600);
+        var m = Math.floor((seconds % 3600) / 60);
+        if (h > 0)
+            return `${h}h ${m}m`;
+        else
+            return `${m}m`;
+    }
+
+    Column {
         anchors.centerIn: parent
-        spacing: 4
+        spacing: 8
 
         // Header
         StyledPopupHeaderRow {
-            icon: "battery_android_full"
+            anchors.horizontalCenter: parent.horizontalCenter
+            icon: Battery.isCharging ? "battery_charging_full" : "battery_full_alt"
             label: Translation.tr("Battery")
         }
 
-        StyledPopupValueRow {
-            visible: {
-                let timeValue = Battery.isCharging ? Battery.timeToFull : Battery.timeToEmpty;
-                let power = Battery.energyRate;
-                return !(Battery.chargeState == 4 || timeValue <= 0 || power <= 0.01);
-            }
-            icon: "schedule"
-            label: Battery.isCharging ? Translation.tr("Time to full:") : Translation.tr("Time to empty:")
-            value: {
-                function formatTime(seconds) {
-                    var h = Math.floor(seconds / 3600);
-                    var m = Math.floor((seconds % 3600) / 60);
-                    if (h > 0)
-                        return `${h}h, ${m}m`;
-                    else
-                        return `${m}m`;
-                }
-                if (Battery.isCharging)
-                    return formatTime(Battery.timeToFull);
-                else
-                    return formatTime(Battery.timeToEmpty);
-            }
-        }
+        GridLayout {
+            columns: 2
+            rowSpacing: 5
+            columnSpacing: 5
+            uniformCellWidths: true
 
-        StyledPopupValueRow {
-            visible:  !(Battery.chargeState != 4 && Battery.energyRate == 0)
-            icon: "bolt"
-            label: {
-                if (Battery.chargeState == 4) {
-                    return Translation.tr("Fully charged");
-                } else if (Battery.chargeState == 1) {
-                    return Translation.tr("Charging:");
-                } else {
-                    return Translation.tr("Discharging:");
-                }
+            StatCard {
+                symbol: "percent"
+                title: Translation.tr("Level")
+                value: Math.round(Battery.percentage * 100) + "%"
             }
-            value: {
-                if (Battery.chargeState == 4) {
-                    return "";
-                } else {
-                    return `${Battery.energyRate.toFixed(2)}W`;
-                }
-            }
-        }
 
-        StyledPopupValueRow {
-            icon: "heart_check"
-            label: Translation.tr("Health:")
-            value: `${(Battery.health).toFixed(1)}%`
+            StatCard {
+                symbol: "heart_check"
+                title: Translation.tr("Health")
+                value: `${Battery.health.toFixed(1)}%`
+            }
+
+            StatCard {
+                symbol: "bolt"
+                title: {
+                    if (Battery.chargeState == 4) return Translation.tr("Power");
+                    return Battery.isCharging ? Translation.tr("Charging") : Translation.tr("Discharging");
+                }
+                value: Battery.chargeState == 4 ? "AC Power" : `${Battery.energyRate.toFixed(2)} W`
+            }
+
+            StatCard {
+                symbol: "schedule"
+                title: {
+                    if (Battery.chargeState == 4) return Translation.tr("Time");
+                    return Battery.isCharging ? Translation.tr("Time to Full") : Translation.tr("Time to Empty");
+                }
+                value: {
+                    if (Battery.chargeState == 4) return "---";
+                    let t = Battery.isCharging ? Battery.timeToFull : Battery.timeToEmpty;
+                    if (t <= 0) return Translation.tr("Calculating...");
+                    return root.formatTime(t);
+                }
+            }
         }
     }
 }

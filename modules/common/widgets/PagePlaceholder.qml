@@ -12,6 +12,7 @@ Item {
     property alias description: widgetDescriptionText.text
     property alias shape: shapeWidget.shape
     property alias descriptionHorizontalAlignment: widgetDescriptionText.horizontalAlignment
+    property alias showIcon: shapeWidget.visible
 
     opacity: shown ? 1 : 0
     visible: opacity > 0

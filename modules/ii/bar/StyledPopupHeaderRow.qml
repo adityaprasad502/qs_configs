@@ -13,8 +13,8 @@ Row {
 
     Item {
         anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: Math.max(materialIcon.implicitWidth, textIcon.implicitWidth)
-        implicitHeight: Math.max(materialIcon.implicitHeight, textIcon.implicitHeight)
+        implicitWidth: root.iconIsMaterial ? materialIcon.implicitWidth : textIcon.implicitWidth
+        implicitHeight: root.iconIsMaterial ? materialIcon.implicitHeight : textIcon.implicitHeight
 
         MaterialSymbol {
             id: materialIcon

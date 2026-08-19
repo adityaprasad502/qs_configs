@@ -15,7 +15,7 @@ Rectangle {
     TextMetrics {
         id: valueMetrics
         text: "192.168.888.888"
-        font.pixelSize: Appearance.font.pixelSize.small
+        font.pixelSize: Appearance.font.pixelSize.smallie
         font.weight: Font.DemiBold
     }
 
@@ -46,8 +46,9 @@ Rectangle {
         StyledText {
             id: value
             Layout.alignment: Qt.AlignHCenter
-            font.pixelSize: Appearance.font.pixelSize.small
+            font.pixelSize: Appearance.font.pixelSize.smallie
             font.weight: Font.DemiBold
+            font.features: {"tnum": 1}
             color: Appearance.colors.colOnSurfaceVariant
         }
     }

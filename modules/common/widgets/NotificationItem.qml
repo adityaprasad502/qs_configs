@@ -252,8 +252,7 @@ return notificationObject.appName === "KDE Connect" ? "yet another notification"
                                 Layout.fillWidth: true
                                 buttonText: Translation.tr("Close")
                                 urgency: notificationObject.urgency
-                                implicitWidth: (notificationObject.actions.length == 0) ? ((actionsFlickable.width - actionRowLayout.spacing) / 2) : 
-                                    (contentItem.implicitWidth + leftPadding + rightPadding)
+                                implicitWidth: contentItem.implicitWidth + leftPadding + rightPadding
 
                                 onClicked: {
                                     root.destroyWithAnimation()
@@ -286,8 +285,7 @@ return notificationObject.appName === "KDE Connect" ? "yet another notification"
                             NotificationActionButton {
                                 Layout.fillWidth: true
                                 urgency: notificationObject.urgency
-                                implicitWidth: (notificationObject.actions.length == 0) ? ((actionsFlickable.width - actionRowLayout.spacing) / 2) : 
-                                    (contentItem.implicitWidth + leftPadding + rightPadding)
+                                implicitWidth: contentItem.implicitWidth + leftPadding + rightPadding
 
                                 onClicked: {
                                     Quickshell.clipboardText = notificationObject.body

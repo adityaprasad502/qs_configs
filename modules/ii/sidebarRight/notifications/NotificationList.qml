@@ -34,6 +34,7 @@ Item {
     PagePlaceholder {
         shown: Notifications.list.length === 0
         icon: "notifications_active"
+        showIcon: root.height > 150
         description: Translation.tr("Nothing")
         shape: MaterialShape.Shape.Ghostish
         descriptionHorizontalAlignment: Text.AlignHCenter

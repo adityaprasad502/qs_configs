@@ -51,7 +51,8 @@ Singleton {
 
     property string maxAvailableMemoryString: kbToGbString(ResourceUsage.memoryTotal)
     property string maxAvailableSwapString: kbToGbString(ResourceUsage.swapTotal)
-    property string maxAvailableCpuString: "--"
+    property string cpuTempString: "---"
+    property string cpuCurrentFreqString: "---"
 
     readonly property int historyLength: Config?.options.resources.historyLength ?? 60
     property list<real> cpuUsageHistory: []
@@ -95,6 +96,10 @@ Singleton {
             fileMeminfo.reload()
             fileStat.reload()
             fileNetDev.reload()
+            fileCpuInfo.reload()
+            if (fileCpuTemp.path !== "") {
+                fileCpuTemp.reload()
+            }
 
             // Parse memory and swap usage
             const textMeminfo = fileMeminfo.text()
@@ -167,17 +172,48 @@ Singleton {
     }
 
     Process {
-        id: findCpuMaxFreqProc
+        id: findTempPathProc
         environment: ({
             LANG: "C",
             LC_ALL: "C"
         })
-        command: ["bash", "-c", "lscpu | grep 'CPU max MHz' | awk '{print $4}'"]
+        command: ["bash", "-c", "grep \"\" /sys/class/hwmon/hwmon*/name 2>/dev/null | awk -F: '/k10temp|coretemp/ {print $1}' | head -n 1 | sed 's/name/temp1_input/'"]
         running: true
         stdout: StdioCollector {
-            id: outputCollector
             onStreamFinished: {
-                root.maxAvailableCpuString = (parseFloat(outputCollector.text) / 1000).toFixed(0) + " GHz"
+                if (text.trim().length > 0) {
+                    fileCpuTemp.path = text.trim()
+                    fileCpuTemp.reload()
+                }
+            }
+        }
+    }
+
+    FileView {
+        id: fileCpuTemp
+        onLoaded: {
+            const val = parseInt(text())
+            if (!isNaN(val)) {
+                root.cpuTempString = (val / 1000).toFixed(1) + "°C"
+            }
+        }
+    }
+
+    FileView {
+        id: fileCpuInfo
+        path: "/proc/cpuinfo"
+        onLoaded: {
+            const txt = text()
+            let sum = 0
+            let count = 0
+            const regex = /cpu MHz\s+:\s+([\d.]+)/g
+            let match;
+            while ((match = regex.exec(txt)) !== null) {
+                sum += parseFloat(match[1])
+                count++
+            }
+            if (count > 0) {
+                root.cpuCurrentFreqString = (sum / count / 1000).toFixed(2) + " GHz"
             }
         }
     }

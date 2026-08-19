@@ -23,38 +23,38 @@ StyledPopup {
             columnSpacing: 5
             uniformCellWidths: true
 
-            NetworkCard {
+            StatCard {
                 symbol: "arrow_downward"
                 title: Translation.tr("Download")
                 value: ResourceUsage.formatNetworkSpeed(ResourceUsage.networkRxSpeed)
             }
-            NetworkCard {
+            StatCard {
                 symbol: "arrow_upward"
                 title: Translation.tr("Upload")
                 value: ResourceUsage.formatNetworkSpeed(ResourceUsage.networkTxSpeed)
             }
-            NetworkCard {
+            StatCard {
                 symbol: "download"
                 title: Translation.tr("Total Down")
                 value: ResourceUsage.formatNetworkTotal(ResourceUsage.networkTotalRxBytes)
             }
-            NetworkCard {
+            StatCard {
                 symbol: "upload"
                 title: Translation.tr("Total Up")
                 value: ResourceUsage.formatNetworkTotal(ResourceUsage.networkTotalTxBytes)
             }
-            NetworkCard {
+            StatCard {
                 symbol: Network.ethernet ? "settings_ethernet" : "wifi"
                 title: Translation.tr("Type")
                 value: Network.ethernet ? "Ethernet" : (Network.wifi ? "Wi-Fi" : "Offline")
             }
-            NetworkCard {
+            StatCard {
                 symbol: "router"
                 title: Translation.tr("Interface")
                 value: Network.interfaceName || "---"
             }
             // Wi-Fi-only: band and signal
-            NetworkCard {
+            StatCard {
                 visible: Network.wifi && !Network.ethernet
                 symbol: "wifi_tethering"
                 title: Translation.tr("Band")
@@ -66,7 +66,7 @@ StyledPopup {
                     return "2.4 GHz";
                 }
             }
-            NetworkCard {
+            StatCard {
                 visible: Network.wifi && !Network.ethernet
                 symbol: "signal_cellular_alt"
                 title: Translation.tr("Signal")
