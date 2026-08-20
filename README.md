@@ -4,11 +4,9 @@
 
 ---
 
-## Screenshots
+## Demo
 
-|               Top Bar Media Pill & Lyrics               |                   Media Controls Popup Island                    |
-| :-----------------------------------------------------: | :--------------------------------------------------------------: |
-| ![Top Bar Preview](https://i.ibb.co/spGhyV43/image.png) | ![Media Island Preview](https://i.ibb.co/LX2zqgGn/qs-screen.png) |
+https://github.com/user-attachments/assets/c21bf387-9bf7-4a87-a946-a175f3ebebc2
 
 ---
 
