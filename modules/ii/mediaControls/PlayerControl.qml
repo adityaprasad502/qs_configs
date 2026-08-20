@@ -414,7 +414,7 @@ Item { // Player instance
                         maximumLineCount: 1
                         visible: true
                         text: {
-                            if (!LyricsService.isSpotifyPlayer(root.player)) return "";
+                            if (!LyricsService.isSupportedPlayer(root.player)) return "";
                             if (LyricsService.lyricLines.length > 0) return LyricsService.nextLyricLine;
                             if (LyricsService.loading) return "Fetching lyrics…";
                             return "No lyrics available";

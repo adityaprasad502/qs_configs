@@ -23,7 +23,7 @@ Item {
     // Widget variables
     property bool translationFor: false // Indicates if the translation is for an autocorrected text
     property string translatedText: ""
-    property list<string> languages: []
+    property var languages: ["auto"]
 
     // Options
     property string targetLanguage: Config.options.language.translator.targetLanguage
@@ -82,21 +82,21 @@ Item {
     Process {
         id: getLanguagesProc
         command: ["trans", "-list-languages", "-no-bidi"]
-        property list<string> bufferList: ["auto"]
+        property string buffer: ""
         running: true
         stdout: SplitParser {
             onRead: data => {
-                getLanguagesProc.bufferList.push(data.trim());
+                getLanguagesProc.buffer += data + "\n";
             }
         }
         onExited: (exitCode, exitStatus) => {
-            // Ensure "auto" is always the first language
-            let langs = getLanguagesProc.bufferList
-                .filter(lang => lang.trim().length > 0 && lang !== "auto")
+            let lines = getLanguagesProc.buffer.split("\n");
+            let langs = lines
+                .map(l => l.trim())
+                .filter(l => l.length > 0 && l !== "auto")
                 .sort((a, b) => a.localeCompare(b));
             langs.unshift("auto");
             root.languages = langs;
-            getLanguagesProc.bufferList = []; // Clear the buffer
         }
     }
 
