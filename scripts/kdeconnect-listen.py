@@ -137,15 +137,29 @@ def make_network_handler(dev_id):
         emit({"event": "network", "id": dev_id, "netType": str(net_type), "netStrength": int(strength)})
     return handler
 
-def make_reachable_handler(dev_id, name):
-    def handler(reachable, **kw):
+def make_reachable_handler(dev_id, name, reachable_state):
+    def handle(reachable, **kw):
         reachable = bool(reachable)
+        prev = reachable_state.get("reachable")
+        reachable_state["reachable"] = reachable
+        if prev == reachable:
+            return  # no change, skip duplicate notifications
         emit({"event": "reachable", "id": dev_id, "name": name, "reachable": reachable})
         if reachable:
             notify("Connected", "Phone is now reachable", urgency="low", icon="phone", app_name=name)
         else:
             notify("Disconnected", "Phone is out of range", urgency="low", icon="phone-missed", app_name=name)
-    return handler
+    return handle
+
+def make_properties_changed_handler(dev_id, name, reachable_state):
+    """Fallback: catches isReachable changes via generic PropertiesChanged signal."""
+    reachable_handler = make_reachable_handler(dev_id, name, reachable_state)
+    def handle(interface, changed, invalidated, **kw):
+        if "isReachable" in changed:
+            reachable_handler(bool(changed["isReachable"]))
+    return handle
+
+
 
 # --- Main ---
 
@@ -157,7 +171,8 @@ for dev_id, name in devices:
     path = f"/modules/kdeconnect/devices/{dev_id}"
     emit_device_state(dev_id, name)
 
-    battery_state = {"low_notified": False, "full_notified": False, "charging": None, "charge": -1}
+    battery_state  = {"low_notified": False, "full_notified": False, "charging": None, "charge": -1}
+    reachable_state = {"reachable": None}  # tracks last known reachability
 
     bus.add_signal_receiver(
         make_battery_handler(dev_id, name, battery_state),
@@ -171,10 +186,18 @@ for dev_id, name in devices:
         dbus_interface="org.kde.kdeconnect.device.connectivity_report",
         path=f"{path}/connectivity_report"
     )
+    # Primary signal
     bus.add_signal_receiver(
-        make_reachable_handler(dev_id, name),
+        make_reachable_handler(dev_id, name, reachable_state),
         signal_name="reachableChanged",
         dbus_interface="org.kde.kdeconnect.device",
+        path=path
+    )
+    # Fallback: generic PropertiesChanged on isReachable
+    bus.add_signal_receiver(
+        make_properties_changed_handler(dev_id, name, reachable_state),
+        signal_name="PropertiesChanged",
+        dbus_interface="org.freedesktop.DBus.Properties",
         path=path
     )
 

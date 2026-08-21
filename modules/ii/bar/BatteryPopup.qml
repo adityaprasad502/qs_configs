@@ -99,9 +99,13 @@ StyledPopup {
                     }
 
                     StatCard {
-                        symbol: "signal_cellular_alt"
+                        symbol: modelData.netStrength > 0 ? "signal_cellular_alt" : "signal_cellular_off"
                         title: "Network"
-                        value: modelData.networkType || "Unknown"
+                        value: {
+                            if (modelData.netStrength <= 0) return "No Signal";
+                            if (!modelData.networkType || modelData.networkType === "Unknown") return "Standby";
+                            return modelData.networkType;
+                        }
                     }
                 }
 
