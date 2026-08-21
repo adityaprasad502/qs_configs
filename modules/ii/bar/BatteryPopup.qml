@@ -68,5 +68,51 @@ StyledPopup {
                 }
             }
         }
+
+        // Phone section — only if there are paired KDE Connect devices
+        Repeater {
+            model: KdeConnect.devices
+            delegate: Column {
+                spacing: 6
+                anchors.horizontalCenter: parent?.horizontalCenter
+
+                // Divider + phone header
+                StyledPopupHeaderRow {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    icon: modelData.reachable ? "smartphone" : "phonelink_erase"
+                    label: modelData.name
+                }
+
+                GridLayout {
+                    columns: 2
+                    rowSpacing: 5
+                    columnSpacing: 5
+                    uniformCellWidths: true
+                    visible: modelData.reachable
+
+                    StatCard {
+                        symbol: modelData.isCharging ? "battery_charging_full" : "battery_std"
+                        title: modelData.isCharging
+                            ? (modelData.charge >= 100 ? "Full" : "Charging")
+                            : "Battery"
+                        value: modelData.charge >= 0 ? (modelData.charge + "%") : "?"
+                    }
+
+                    StatCard {
+                        symbol: "signal_cellular_alt"
+                        title: "Network"
+                        value: modelData.networkType || "Unknown"
+                    }
+                }
+
+                StyledText {
+                    visible: !modelData.reachable
+                    text: "Not reachable"
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+        }
     }
 }
