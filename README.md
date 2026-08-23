@@ -28,13 +28,11 @@ https://github.com/user-attachments/assets/c21bf387-9bf7-4a87-a946-a175f3ebebc2
 - **KDE Connect integration** — your phone's battery level shown right on the bar.
 - **Reworked workspaces** — an overhauled workspace switcher, alongside unified `StatCard`-based popups for system resources (CPU / GPU / RAM / disk).
 - **Material squircles** — a custom shape rendering library powering smooth, consistent widget corners across the shell.
+- **NextDNS quick toggle** — replaces the upstream Cloudflare WARP toggle; starts/stops the `nextdns` daemon with live status sync (hidden entirely if the CLI isn't installed).
 
-<details>
-<summary><b>How this fork differs</b></summary>
-
-The first commit was a straight copy of the upstream config. Everything listed above — the lyrics system, media pill, network widgets, KDE Connect support, workspaces, resource popups, and the shapes library — was added or reworked on top of it.
-
-</details>
+> [!TIP]
+> **How this fork differs**
+> The first commit was a straight copy of the upstream config. Everything listed above — the lyrics system, media pill, network widgets, KDE Connect support, workspaces, resource popups, the shapes library, and the NextDNS toggle — was added or reworked on top of it.
 
 ## Installation
 

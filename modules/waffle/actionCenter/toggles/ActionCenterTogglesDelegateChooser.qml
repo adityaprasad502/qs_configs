@@ -41,10 +41,10 @@ DelegateChooser {
         }
     }
     DelegateChoice {
-        roleValue: "cloudflareWarp"
+        roleValue: "nextdns"
         ActionCenterToggleButton {
-            toggleModel: CloudflareWarpToggle {}
-            icon: "cloudflare"
+            toggleModel: NextDnsToggle {}
+            icon: "shield_lock"
         }
     }
     DelegateChoice {

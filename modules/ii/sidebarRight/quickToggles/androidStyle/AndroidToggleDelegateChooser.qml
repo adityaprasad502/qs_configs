@@ -70,7 +70,7 @@ DelegateChooser {
         }
     } }
 
-    DelegateChoice { roleValue: "cloudflareWarp"; AndroidCloudflareWarpToggle {
+    DelegateChoice { roleValue: "nextdns"; AndroidNextDnsToggle {
         required property int index
         required property var modelData
         buttonIndex: root.startingIndex + index
