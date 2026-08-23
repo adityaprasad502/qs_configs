@@ -103,23 +103,23 @@ def make_battery_handler(dev_id, name, state):
         # Charging plugged in / unplugged
         if prev_charging is not None and prev_charging != is_charging:
             if is_charging:
-                notify(f"Charging", f"Battery at {charge}%", urgency="low", icon="battery-caution-charging", app_name=name)
+                notify(f"{name} is charging", f"Battery at {charge}%", urgency="low", icon="battery-caution-charging", app_name=name)
                 state["low_notified"]  = False
                 state["full_notified"] = False
             else:
-                notify(f"Unplugged", f"Battery at {charge}%", urgency="low", icon="battery-good", app_name=name)
+                notify(f"{name} was unplugged", f"Battery at {charge}%", urgency="low", icon="battery-good", app_name=name)
                 state["low_notified"]  = False
                 state["full_notified"] = False
 
         # Battery full
         if is_charging and charge >= FULL_THRESHOLD and not state.get("full_notified"):
-            notify(f"Fully charged", f"Battery is at {charge}% — safe to unplug", urgency="normal", icon="battery-full-charged", app_name=name)
+            notify(f"{name} is fully charged", f"Battery is at {charge}% — safe to unplug", urgency="normal", icon="battery-full-charged", app_name=name)
             state["full_notified"] = True
             state["low_notified"]  = False
 
         # Battery low (only while discharging)
         if not is_charging and charge < LOW_THRESHOLD and not state.get("low_notified"):
-            notify(f"Battery low", f"Battery at {charge}% — please charge", urgency="critical", icon="battery-caution", app_name=name)
+            notify(f"{name} battery is low", f"Battery at {charge}% — please charge", urgency="critical", icon="battery-caution", app_name=name)
             state["low_notified"]  = True
             state["full_notified"] = False
 
@@ -146,9 +146,9 @@ def make_reachable_handler(dev_id, name, reachable_state):
             return  # no change, skip duplicate notifications
         emit({"event": "reachable", "id": dev_id, "name": name, "reachable": reachable})
         if reachable:
-            notify("Connected", "Phone is now reachable", urgency="low", icon="phone", app_name=name)
+            notify(f"{name} is connected", "Phone is now reachable", urgency="low", icon="phone", app_name=name)
         else:
-            notify("Disconnected", "Phone is out of range", urgency="low", icon="phone-missed", app_name=name)
+            notify(f"{name} is disconnected", "Phone is out of range", urgency="low", icon="phone-missed", app_name=name)
     return handle
 
 def make_properties_changed_handler(dev_id, name, reachable_state):

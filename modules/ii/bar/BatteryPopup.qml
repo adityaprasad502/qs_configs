@@ -99,7 +99,12 @@ StyledPopup {
                     }
 
                     StatCard {
-                        symbol: modelData.netStrength > 0 ? "signal_cellular_alt" : "signal_cellular_off"
+                        symbol: {
+                            const bars = ["signal_cellular_0_bar", "signal_cellular_1_bar",
+                                          "signal_cellular_2_bar", "signal_cellular_3_bar",
+                                          "signal_cellular_4_bar"];
+                            return bars[Math.max(0, Math.min(4, modelData.netStrength ?? 0))];
+                        }
                         title: "Network"
                         value: {
                             if (modelData.netStrength <= 0) return "No Signal";
