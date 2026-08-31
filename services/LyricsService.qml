@@ -329,8 +329,16 @@ Singleton {
         root.lyricGroupIndex = index;
     }
 
+    // Rebuild group index when bar width changes, instead of checking inside the 200ms tick
+    Connections {
+        target: GlobalStates
+        function onTopBarMediaWidthChanged() {
+            if (root.lyricLines.length > 0) Qt.callLater(root.buildGroupIndex)
+        }
+    }
+
     Timer {
-        interval: 100
+        interval: 200
         repeat: true
         running: activePlayer?.playbackState === MprisPlaybackState.Playing && root.lyricLines.length > 0
         onTriggered: {
@@ -350,13 +358,6 @@ Singleton {
 
             let lines = root.lyricLines;
             let groups = root.lyricGroupIndex;
-
-            // Rebuild groups if bar width changed
-            let currentWidth = Math.max(140, (GlobalStates?.topBarMediaWidth ?? 440) - 150);
-            if (currentWidth !== root.lastGroupWidth && lines.length > 0) {
-                root.buildGroupIndex();
-                groups = root.lyricGroupIndex;
-            }
 
             if (!groups || groups.length !== lines.length) return;
 

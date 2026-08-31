@@ -64,22 +64,19 @@ Singleton {
     }
 
     function updateMemoryUsageHistory() {
-        memoryUsageHistory = [...memoryUsageHistory, memoryUsedPercentage]
-        if (memoryUsageHistory.length > historyLength) {
-            memoryUsageHistory.shift()
-        }
+        if (memoryUsageHistory.length >= historyLength) memoryUsageHistory.splice(0, 1)
+        memoryUsageHistory.push(memoryUsedPercentage)
+        memoryUsageHistoryChanged()
     }
     function updateSwapUsageHistory() {
-        swapUsageHistory = [...swapUsageHistory, swapUsedPercentage]
-        if (swapUsageHistory.length > historyLength) {
-            swapUsageHistory.shift()
-        }
+        if (swapUsageHistory.length >= historyLength) swapUsageHistory.splice(0, 1)
+        swapUsageHistory.push(swapUsedPercentage)
+        swapUsageHistoryChanged()
     }
     function updateCpuUsageHistory() {
-        cpuUsageHistory = [...cpuUsageHistory, cpuUsage]
-        if (cpuUsageHistory.length > historyLength) {
-            cpuUsageHistory.shift()
-        }
+        if (cpuUsageHistory.length >= historyLength) cpuUsageHistory.splice(0, 1)
+        cpuUsageHistory.push(cpuUsage)
+        cpuUsageHistoryChanged()
     }
     function updateHistories() {
         updateMemoryUsageHistory()
@@ -87,16 +84,19 @@ Singleton {
         updateCpuUsageHistory()
     }
 
-	Timer {
-		interval: 1
-        running: true 
+    Timer {
+        interval: Config.options?.resources?.updateInterval ?? 3000
+        running: true
         repeat: true
-		onTriggered: {
+        triggeredOnStart: true
+        property int _cpuInfoTick: 0
+        onTriggered: {
             // Reload files
             fileMeminfo.reload()
             fileStat.reload()
             fileNetDev.reload()
-            fileCpuInfo.reload()
+            // /proc/cpuinfo only changes on CPU freq scaling; read every 10th tick (~30s default)
+            if (++_cpuInfoTick % 10 === 0) fileCpuInfo.reload()
             if (fileCpuTemp.path !== "") {
                 fileCpuTemp.reload()
             }
@@ -126,9 +126,8 @@ Singleton {
             }
 
             root.updateHistories()
-            interval = Config.options?.resources?.updateInterval ?? 3000
         }
-	}
+    }
 
 	FileView { id: fileMeminfo; path: "/proc/meminfo" }
     FileView { id: fileStat; path: "/proc/stat" }

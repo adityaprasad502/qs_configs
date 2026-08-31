@@ -33,7 +33,7 @@ Singleton {
     // Get the layout code from the base.lst file by grabbing the line with the current layout name
     Process {
         id: getLayoutProc
-        command: ["cat", root.baseLayoutFilePath]
+        command: ["grep", "-m", "2", root.currentLayoutName, root.baseLayoutFilePath]
 
         stdout: StdioCollector {
             id: layoutCollector

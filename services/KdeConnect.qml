@@ -45,18 +45,60 @@ Item {
                     }
                     if (data.event === "state") {
                         root.updateDevice({
-                            id:         data.id,
-                            name:       data.name,
-                            reachable:  data.reachable,
-                            charge:     data.charge,
-                            isCharging: data.charging,
-                            networkType: data.netType,
-                            netStrength: data.netStrength
+                            id:               data.id,
+                            name:             data.name,
+                            reachable:        data.reachable,
+                            charge:           data.charge,
+                            isCharging:       data.charging,
+                            networkType:      data.netType,
+                            netStrength:      data.netStrength,
+                            chargeRate:       0,
+                            lastBatteryTime:  Date.now(),
+                            sessionStartCharge: data.charge,
+                            sessionStartTime: Date.now(),
+                            timeReachedFull:  data.charge >= 100 ? Date.now() : null,
                         });
                         return;
                     }
                     if (data.event === "battery") {
-                        root.updateDevice({ id: data.id, charge: data.charge, isCharging: data.charging });
+                        const prev = root.devices.find(d => d.id === data.id)
+                        const now = Date.now()
+                        let chargeRate = prev?.chargeRate ?? 0
+                        if (prev?.lastBatteryTime) {
+                            const deltaSec = (now - prev.lastBatteryTime) / 1000
+                            const deltaCharge = data.charge - prev.charge
+                            // Only update rate if ≥30s elapsed, same charge direction, and charge actually moved
+                            if (deltaSec >= 30 && deltaCharge !== 0 && (prev.isCharging === data.charging)) {
+                                chargeRate = (deltaCharge / deltaSec) * 60 // %/min
+                            }
+                        }
+                        
+                        let timeReachedFull = prev?.timeReachedFull ?? null;
+                        if (data.charge >= 100 && (prev?.charge ?? 0) < 100) {
+                            timeReachedFull = now;
+                        } else if (data.charge < 100) {
+                            timeReachedFull = null;
+                        }
+
+                        root.updateDevice({
+                            id:              data.id,
+                            charge:          data.charge,
+                            isCharging:      data.charging,
+                            chargeRate:      chargeRate,
+                            lastBatteryTime: now,
+                            sessionStartCharge: prev?.sessionStartCharge ?? data.charge,
+                            sessionStartTime:   prev?.sessionStartTime ?? now,
+                            timeReachedFull:    timeReachedFull,
+                            // Peak/low only updated from positive (charging) measurements
+                            peakChargeRate: chargeRate > 0
+                                ? Math.max(chargeRate, prev?.peakChargeRate ?? 0)
+                                : (prev?.peakChargeRate ?? 0),
+                            minChargeRate: chargeRate > 0
+                                ? (prev?.minChargeRate > 0
+                                    ? Math.min(chargeRate, prev.minChargeRate)
+                                    : chargeRate)
+                                : (prev?.minChargeRate ?? 0),
+                        });
                         return;
                     }
                     if (data.event === "network") {

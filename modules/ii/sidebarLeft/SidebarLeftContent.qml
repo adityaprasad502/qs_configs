@@ -84,25 +84,53 @@ Item {
                 }
 
                 contentChildren: [
-                    ...(root.aiChatEnabled ? [aiChat.createObject()] : []),
-                    ...(root.translatorEnabled ? [translator.createObject()] : []),
+                    ...(root.aiChatEnabled ? [aiChatPage.createObject()] : []),
+                    ...(root.translatorEnabled ? [translatorPage.createObject()] : []),
                     ...((root.tabButtonList.length === 0 || (!root.aiChatEnabled && !root.translatorEnabled && root.animeCloset)) ? [placeholder.createObject()] : []),
-                    ...(root.animeEnabled ? [anime.createObject()] : []),
+                    ...(root.animeEnabled ? [animePage.createObject()] : []),
                 ]
             }
         }
 
+        // Each page is a lightweight wrapper that loads its content only on first visit
         Component {
-            id: aiChat
-            AiChat {}
+            id: aiChatPage
+            Item {
+                readonly property bool isCurrent: SwipeView.isCurrentItem
+                property bool _loaded: false
+                onIsCurrentChanged: if (isCurrent) _loaded = true
+                Loader {
+                    anchors.fill: parent
+                    active: parent._loaded || parent.isCurrent
+                    sourceComponent: AiChat {}
+                }
+            }
         }
         Component {
-            id: translator
-            Translator {}
+            id: translatorPage
+            Item {
+                readonly property bool isCurrent: SwipeView.isCurrentItem
+                property bool _loaded: false
+                onIsCurrentChanged: if (isCurrent) _loaded = true
+                Loader {
+                    anchors.fill: parent
+                    active: parent._loaded || parent.isCurrent
+                    sourceComponent: Translator {}
+                }
+            }
         }
         Component {
-            id: anime
-            Anime {}
+            id: animePage
+            Item {
+                readonly property bool isCurrent: SwipeView.isCurrentItem
+                property bool _loaded: false
+                onIsCurrentChanged: if (isCurrent) _loaded = true
+                Loader {
+                    anchors.fill: parent
+                    active: parent._loaded || parent.isCurrent
+                    sourceComponent: Anime {}
+                }
+            }
         }
         Component {
             id: placeholder

@@ -6,21 +6,17 @@ import QtQuick.Layouts
 
 StyledPopup {
     id: root
-    // Time formatter helper
+
     function formatTime(seconds) {
         var h = Math.floor(seconds / 3600);
         var m = Math.floor((seconds % 3600) / 60);
-        if (h > 0)
-            return `${h}h ${m}m`;
-        else
-            return `${m}m`;
+        return h > 0 ? `${h}h ${m}m` : `${m}m`;
     }
 
     Column {
         anchors.centerIn: parent
         spacing: 8
 
-        // Header
         StyledPopupHeaderRow {
             anchors.horizontalCenter: parent.horizontalCenter
             icon: Battery.isCharging ? "battery_charging_full" : "battery_full_alt"
@@ -65,61 +61,6 @@ StyledPopup {
                     let t = Battery.isCharging ? Battery.timeToFull : Battery.timeToEmpty;
                     if (t <= 0) return Translation.tr("Calculating...");
                     return root.formatTime(t);
-                }
-            }
-        }
-
-        // Phone section — only if there are paired KDE Connect devices
-        Repeater {
-            model: KdeConnect.devices
-            delegate: Column {
-                spacing: 6
-                anchors.horizontalCenter: parent?.horizontalCenter
-
-                // Divider + phone header
-                StyledPopupHeaderRow {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    icon: modelData.reachable ? "smartphone" : "phonelink_erase"
-                    label: modelData.name
-                }
-
-                GridLayout {
-                    columns: 2
-                    rowSpacing: 5
-                    columnSpacing: 5
-                    uniformCellWidths: true
-                    visible: modelData.reachable
-
-                    StatCard {
-                        symbol: modelData.isCharging ? "battery_charging_full" : "battery_std"
-                        title: modelData.isCharging
-                            ? (modelData.charge >= 100 ? "Full" : "Charging")
-                            : "Battery"
-                        value: modelData.charge >= 0 ? (modelData.charge + "%") : "?"
-                    }
-
-                    StatCard {
-                        symbol: {
-                            const bars = ["signal_cellular_0_bar", "signal_cellular_1_bar",
-                                          "signal_cellular_2_bar", "signal_cellular_3_bar",
-                                          "signal_cellular_4_bar"];
-                            return bars[Math.max(0, Math.min(4, modelData.netStrength ?? 0))];
-                        }
-                        title: "Network"
-                        value: {
-                            if (modelData.netStrength <= 0) return "No Signal";
-                            if (!modelData.networkType || modelData.networkType === "Unknown") return "Standby";
-                            return modelData.networkType;
-                        }
-                    }
-                }
-
-                StyledText {
-                    visible: !modelData.reachable
-                    text: "Not reachable"
-                    color: Appearance.colors.colSubtext
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    anchors.horizontalCenter: parent.horizontalCenter
                 }
             }
         }

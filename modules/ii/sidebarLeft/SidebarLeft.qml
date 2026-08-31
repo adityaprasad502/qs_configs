@@ -58,11 +58,16 @@ Scope { // Scope
         else root.pin = !root.pin;
     }
 
-    Component.onCompleted: {
-        root.sidebarContent = contentComponent.createObject(null, {
-            "scopeRoot": root,
-        });
-        sidebarLoader.item.contentParent.children = [root.sidebarContent];
+    Connections {
+        target: GlobalStates
+        function onSidebarLeftOpenChanged() {
+            if (GlobalStates.sidebarLeftOpen && !root.sidebarContent) {
+                root.sidebarContent = contentComponent.createObject(null, {
+                    "scopeRoot": root,
+                });
+                sidebarLoader.item.contentParent.children = [root.sidebarContent];
+            }
+        }
     }
 
     onDetachChanged: {

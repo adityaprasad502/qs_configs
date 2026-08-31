@@ -255,6 +255,21 @@ Item { // Bar content region
                         Layout.alignment: Qt.AlignVCenter
                         Layout.leftMargin: 8
                     }
+                    Repeater {
+                        model: KdeConnect.devices
+                        delegate: Revealer {
+                            readonly property var device: modelData
+                            reveal: device.reachable
+                            Layout.alignment: Qt.AlignVCenter
+                            Layout.leftMargin: reveal ? 4 : 0
+                            Behavior on Layout.leftMargin {
+                                animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                            }
+                            PhoneBatteryIndicator {
+                                phone: device
+                            }
+                        }
+                    }
                 }
             }
 
