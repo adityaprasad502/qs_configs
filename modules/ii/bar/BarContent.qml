@@ -256,10 +256,10 @@ Item { // Bar content region
                         Layout.leftMargin: 8
                     }
                     Repeater {
-                        model: KdeConnect.devices
+                        model: KdeConnect.devices.length
                         delegate: Revealer {
-                            readonly property var device: modelData
-                            reveal: device.reachable
+                            readonly property var device: KdeConnect.devices[index]
+                            reveal: device ? device.reachable : false
                             Layout.alignment: Qt.AlignVCenter
                             Layout.leftMargin: reveal ? 4 : 0
                             Behavior on Layout.leftMargin {

@@ -80,24 +80,26 @@ Item {
                             timeReachedFull = null;
                         }
 
+                        const chargingFlipped = prev && (prev.isCharging !== data.charging);
+
                         root.updateDevice({
                             id:              data.id,
                             charge:          data.charge,
                             isCharging:      data.charging,
-                            chargeRate:      chargeRate,
+                            chargeRate:      chargingFlipped ? 0 : chargeRate,
                             lastBatteryTime: now,
-                            sessionStartCharge: prev?.sessionStartCharge ?? data.charge,
-                            sessionStartTime:   prev?.sessionStartTime ?? now,
+                            sessionStartCharge: chargingFlipped ? data.charge : (prev?.sessionStartCharge ?? data.charge),
+                            sessionStartTime:   chargingFlipped ? now : (prev?.sessionStartTime ?? now),
                             timeReachedFull:    timeReachedFull,
                             // Peak/low only updated from positive (charging) measurements
-                            peakChargeRate: chargeRate > 0
+                            peakChargeRate: chargingFlipped ? 0 : (chargeRate > 0
                                 ? Math.max(chargeRate, prev?.peakChargeRate ?? 0)
-                                : (prev?.peakChargeRate ?? 0),
-                            minChargeRate: chargeRate > 0
+                                : (prev?.peakChargeRate ?? 0)),
+                            minChargeRate: chargingFlipped ? 0 : (chargeRate > 0
                                 ? (prev?.minChargeRate > 0
                                     ? Math.min(chargeRate, prev.minChargeRate)
                                     : chargeRate)
-                                : (prev?.minChargeRate ?? 0),
+                                : (prev?.minChargeRate ?? 0)),
                         });
                         return;
                     }
