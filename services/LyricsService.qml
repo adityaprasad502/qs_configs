@@ -329,11 +329,19 @@ Singleton {
         root.lyricGroupIndex = index;
     }
 
-    // Rebuild group index when bar width changes, instead of checking inside the 200ms tick
+    Timer {
+        id: groupIndexDebounce
+        interval: 150
+        running: false
+        onTriggered: {
+            if (root.lyricLines.length > 0) root.buildGroupIndex()
+        }
+    }
+
     Connections {
         target: GlobalStates
         function onTopBarMediaWidthChanged() {
-            if (root.lyricLines.length > 0) Qt.callLater(root.buildGroupIndex)
+            groupIndexDebounce.restart()
         }
     }
 

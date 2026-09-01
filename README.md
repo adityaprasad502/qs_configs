@@ -6,7 +6,8 @@
 
 </div>
 
-> **⚠ Heads up** — this repo is for people who know what they're doing. It is not a plug-and-play dotfile setup: no installer, no hand-holding, and no guarantee it works on your system out of the box.  
+> **⚠ Heads up** — this repo is for people who know what they're doing. It is not a plug-and-play dotfile setup: no installer, no hand-holding, and no guarantee it works on your system out of the box.
+>
 > **Note:** This README won't be updated further. Please follow the commits from the last README update for new features and changes. You can view all changes made since this document was frozen [here](https://github.com/adityaprasad502/qs_configs/compare/946118a...master).
 
 ## Showcase
