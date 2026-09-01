@@ -44,6 +44,12 @@ Item {
                         return;
                     }
                     if (data.event === "state") {
+                        const prev = root.devices.find(d => d.id === data.id)
+                        
+                        // Reset session if it was disconnected for > 5 mins
+                        const wasDisconnectedTooLong = prev && prev.disconnectTime && (Date.now() - prev.disconnectTime > 300000);
+                        const chargingFlipped = !prev || (prev.isCharging !== data.charging) || wasDisconnectedTooLong;
+
                         root.updateDevice({
                             id:               data.id,
                             name:             data.name,
@@ -52,11 +58,17 @@ Item {
                             isCharging:       data.charging,
                             networkType:      data.netType,
                             netStrength:      data.netStrength,
-                            chargeRate:       0,
-                            lastBatteryTime:  Date.now(),
-                            sessionStartCharge: data.charge,
-                            sessionStartTime: Date.now(),
-                            timeReachedFull:  data.charge >= 100 ? Date.now() : null,
+                            
+                            chargeRate:         chargingFlipped ? 0 : (prev?.chargeRate ?? 0),
+                            lastBatteryTime:    Date.now(),
+                            sessionStartCharge: chargingFlipped ? data.charge : (prev?.sessionStartCharge ?? data.charge),
+                            sessionStartTime:   chargingFlipped ? Date.now() : (prev?.sessionStartTime ?? Date.now()),
+                            timeReachedFull:    chargingFlipped 
+                                ? (data.charge >= 100 ? Date.now() : null) 
+                                : (prev?.timeReachedFull ?? (data.charge >= 100 ? Date.now() : null)),
+                            peakChargeRate:     chargingFlipped ? 0 : (prev?.peakChargeRate ?? 0),
+                            minChargeRate:      chargingFlipped ? 0 : (prev?.minChargeRate ?? 0),
+                            disconnectTime:     0 // Reset timer since we are connected
                         });
                         return;
                     }
@@ -108,7 +120,13 @@ Item {
                         return;
                     }
                     if (data.event === "reachable") {
-                        root.updateDevice({ id: data.id, name: data.name, reachable: data.reachable });
+                        const prev = root.devices.find(d => d.id === data.id);
+                        root.updateDevice({ 
+                            id: data.id, 
+                            name: data.name, 
+                            reachable: data.reachable,
+                            disconnectTime: (data.reachable === false) ? Date.now() : (prev?.disconnectTime ?? 0)
+                        });
                         return;
                     }
                 } catch (e) {}
